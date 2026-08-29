@@ -338,6 +338,29 @@
     justify-content: center;
   }
   .bird-tile .mystery-qmark { font-size: 18px; }
+  .mystery-reqtext {
+    position: absolute;
+    top: 79%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    pointer-events: none;
+  }
+  .mystery-reqtext .req-small {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .mystery-reqtext .req-big {
+    font-family: var(--font-sans);
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--green-dark);
+  }
   .scene-bg svg { width: 100%; height: 100%; display: block; }
   .reveal-box .veil {
     position: absolute; inset: 0;
@@ -525,10 +548,45 @@
     overflow-wrap: anywhere;
     transition: border-color 0.15s, background 0.15s;
   }
-  .opt-btn.correct { background: var(--green); color: #fff; border-color: var(--green); }
-  .opt-btn.wrong { background: var(--red); color: #fff; border-color: var(--red); opacity: 0.85; }
-  .opt-btn.also-correct { background: var(--surface); color: var(--green-dark); border: 1.5px dashed var(--green); }
-  .opt-btn.locked { opacity: 0.4; pointer-events: none; }
+  .opt-btn.correct {
+    background: var(--green); color: #fff; border-color: var(--green);
+    box-shadow: 0 0 0 4px rgba(63,122,82,0.28);
+    transform: scale(1.05);
+    font-weight: 800;
+    opacity: 1;
+  }
+  .opt-btn.wrong {
+    background: var(--red); color: #fff; border-color: var(--red);
+    box-shadow: 0 0 0 4px rgba(217,72,79,0.28);
+    transform: scale(1.05);
+    font-weight: 800;
+    opacity: 1;
+  }
+  .opt-btn.also-correct { background: var(--surface); color: var(--green-dark); border: 2.5px dashed var(--green); font-weight: 700; }
+  .opt-btn.locked:not(.correct):not(.wrong):not(.also-correct) { opacity: 0.4; pointer-events: none; }
+  .opt-btn.locked { pointer-events: none; }
+
+  .quiz-hint-btn {
+    font-family: var(--font-sans);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--green);
+    border: none;
+    padding: 5px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(44,92,60,0.3);
+  }
+  .rq-timer {
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--green-dark);
+    margin-bottom: 12px;
+  }
+  .rq-timer.low { color: var(--red); }
 
   .story-box {
     border-top: 1px solid var(--border);
@@ -922,17 +980,17 @@
   <div class="view" id="view-challenge-menu">
     <div class="stamp">選擇挑戰模式</div>
     <div class="challenge-menu-grid">
-      <button class="challenge-card" id="menuFullChallengeBtn">
-        <div class="challenge-card-title">總挑戰</div>
-        <div class="challenge-card-desc">依序解鎖每一種鳥,答對條件、快門抓拍完整流程</div>
+      <button class="challenge-card" id="menuGalleryBtn">
+        <div class="challenge-card-title">1. 圖鑑模式</div>
+        <div class="challenge-card-desc">直接瀏覽每一種鳥的完整資料與照片,不用答題</div>
       </button>
       <button class="challenge-card" id="menuQuizChallengeBtn">
-        <div class="challenge-card-title">題數挑戰賽</div>
+        <div class="challenge-card-title">2. 題數挑戰賽</div>
         <div class="challenge-card-desc">自選 10-100 題,隨機從所有鳥類抽題快速作答</div>
       </button>
-      <button class="challenge-card" id="menuGalleryBtn">
-        <div class="challenge-card-title">圖鑑模式</div>
-        <div class="challenge-card-desc">直接瀏覽每一種鳥的完整資料與照片,不用答題</div>
+      <button class="challenge-card" id="menuFullChallengeBtn">
+        <div class="challenge-card-title">3. 總挑戰</div>
+        <div class="challenge-card-desc">依序解鎖每一種鳥,答對條件、快門抓拍完整流程</div>
       </button>
     </div>
     <button class="back-link" id="challengeMenuBackBtn" style="margin-top:16px;">← 返回主畫面</button>
@@ -953,6 +1011,7 @@
     </div>
     <div id="quizPlayPanel" style="display:none;">
       <div class="progress-line" id="rqProgress"></div>
+      <div class="rq-timer" id="rqTimer"></div>
       <div class="card" id="rqQuestionArea"></div>
     </div>
     <div id="quizSummaryPanel" style="display:none;">
@@ -1620,7 +1679,9 @@ function renderQuiz() {
   document.getElementById("revealScene").innerHTML = buildSceneSVG(elevationValue, seasonValue, "rv-" + bird.id);
 
   document.getElementById("revealMysteryPlaceholder").innerHTML =
-    buildMysteryBirdImg(mysteryImgForLevel(bird.level)) + '<div class="mystery-qmark">?</div>';
+    buildMysteryBirdImg(mysteryImgForLevel(bird.level)) +
+    '<div class="mystery-qmark">?</div>' +
+    '<div class="mystery-reqtext"><span class="req-small">需答對</span><span class="req-big">' + bird.requiredCorrect + '題</span></div>';
 
   if (!currentAnswered[bird.id]) currentAnswered[bird.id] = {};
   const answered = currentAnswered[bird.id];
@@ -1670,6 +1731,27 @@ function renderQuiz() {
   const unansweredConds = CONDITIONS.filter(c => answered[c.key] === undefined);
   const reachedThreshold = correctSoFar >= bird.requiredCorrect;
   const wantsCapture = currentAnswered[bird.id + "_wantCapture"] === true;
+
+  if (unansweredConds.length === 0 && !reachedThreshold && !wantsCapture) {
+    capturePanel.style.display = "none";
+    stopCaptureGame();
+    const encourageBox = document.createElement("div");
+    encourageBox.className = "threshold-choice";
+    encourageBox.innerHTML =
+      '<div class="q-label">只差一點點,可以多瀏覽圖鑑模式累積知識,再回來挑戰一次!</div>' +
+      '<div class="hint" style="margin-top:8px;">這隻鳥答對 ' + correctSoFar + ' / ' + bird.requiredCorrect + ' 題,還沒達到解鎖門檻</div>';
+    const retryBtn = document.createElement("button");
+    retryBtn.className = "save-btn";
+    retryBtn.style.marginTop = "14px";
+    retryBtn.textContent = "重新挑戰這隻鳥";
+    retryBtn.onclick = () => {
+      currentAnswered[bird.id] = {};
+      renderQuiz();
+    };
+    encourageBox.appendChild(retryBtn);
+    qArea.appendChild(encourageBox);
+    return;
+  }
 
   if (unansweredConds.length === 0 || wantsCapture) {
     capturePanel.style.display = "";
@@ -1738,7 +1820,7 @@ function renderQuiz() {
   if (GAME_MODE === "explain") {
     const hintBtn = document.createElement("button");
     hintBtn.type = "button";
-    hintBtn.className = "hint-btn";
+    hintBtn.className = "quiz-hint-btn";
     hintBtn.textContent = "提示";
     hintBtn.onclick = () => {
       answered[cond.key] = true;
@@ -1765,6 +1847,7 @@ function renderQuiz() {
       answered[cond.key] = isCorrect;
       answered[cond.key + "_picked"] = opt;
       document.getElementById("correctCount").textContent = Object.values(answered).filter(v => v === true).length;
+      if (GAME_MODE === "challenge") saveProgress();
       Array.from(optGrid.children).forEach(otherBtn => {
         otherBtn.classList.add("locked");
         if (otherBtn.textContent === opt) {
@@ -1773,7 +1856,7 @@ function renderQuiz() {
           otherBtn.classList.add("also-correct");
         }
       });
-      setTimeout(renderQuiz, 900);
+      setTimeout(renderQuiz, 1900);
     };
     optGrid.appendChild(btn);
   });
@@ -2093,9 +2176,11 @@ function buildBirdsDoneMap() {
 
 function saveProgress() {
   if (!FIREBASE_ENABLED || !db || !currentPlayerId) return;
+  const cleanProgress = JSON.parse(JSON.stringify(currentAnswered));
   db.collection("players").doc(currentPlayerId).set({
     id: currentPlayerId,
     score: totalScore,
+    progress: cleanProgress,
     birdsDone: buildBirdsDoneMap(),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }).catch(err => console.error("儲存進度失敗", err));
@@ -2103,12 +2188,14 @@ function saveProgress() {
 
 function backToHome() {
   stopCaptureGame();
+  stopRqTimer();
   document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
 }
 
 function showChallengeMenu() {
   stopCaptureGame();
+  stopRqTimer();
   document.querySelectorAll(".mode-btn").forEach(b => {
     b.classList.toggle("active", b.dataset.mode === "challenge");
   });
@@ -2157,13 +2244,17 @@ document.getElementById("loginConfirmBtn").onclick = async () => {
     if (doc.exists) {
       const data = doc.data();
       totalScore = data.score || 0;
-      const birdsDone = data.birdsDone || {};
-      Object.keys(birdsDone).forEach(birdId => {
-        if (birdsDone[birdId]) {
-          currentAnswered[birdId + "_done"] = true;
-          currentAnswered[birdId + "_captured"] = true;
-        }
-      });
+      if (data.progress && typeof data.progress === "object") {
+        currentAnswered = data.progress;
+      } else if (data.birdsDone) {
+        const birdsDone = data.birdsDone;
+        Object.keys(birdsDone).forEach(birdId => {
+          if (birdsDone[birdId]) {
+            currentAnswered[birdId + "_done"] = true;
+            currentAnswered[birdId + "_captured"] = true;
+          }
+        });
+      }
     }
   } catch (err) {
     console.error("讀取進度失敗", err);
@@ -2189,8 +2280,41 @@ document.getElementById("challengeMenuBackBtn").onclick = () => backToHome();
 let rqQuestions = [];
 let rqIndex = 0;
 let rqCorrect = 0;
+let rqTimerRemaining = 0;
+let rqTimerInterval = null;
+
+function stopRqTimer() {
+  if (rqTimerInterval) {
+    clearInterval(rqTimerInterval);
+    rqTimerInterval = null;
+  }
+}
+
+function startRqTimer(totalSeconds) {
+  stopRqTimer();
+  rqTimerRemaining = totalSeconds;
+  updateRqTimerDisplay();
+  rqTimerInterval = setInterval(() => {
+    rqTimerRemaining--;
+    updateRqTimerDisplay();
+    if (rqTimerRemaining <= 0) {
+      stopRqTimer();
+      showRqSummary();
+    }
+  }, 1000);
+}
+
+function updateRqTimerDisplay() {
+  const el = document.getElementById("rqTimer");
+  if (!el) return;
+  const m = Math.floor(rqTimerRemaining / 60);
+  const s = rqTimerRemaining % 60;
+  el.textContent = "剩餘時間 " + m + ":" + String(s).padStart(2, "0");
+  el.classList.toggle("low", rqTimerRemaining <= 10);
+}
 
 function showRandomQuizSetup() {
+  stopRqTimer();
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
   document.getElementById("view-random-quiz").classList.add("active");
   document.getElementById("quizSetupPanel").style.display = "block";
@@ -2229,6 +2353,7 @@ document.getElementById("startRandomQuizBtn").onclick = () => {
   rqCorrect = 0;
   document.getElementById("quizSetupPanel").style.display = "none";
   document.getElementById("quizPlayPanel").style.display = "block";
+  startRqTimer(n <= 50 ? 60 : 120);
   renderRqQuestion();
 };
 
@@ -2281,12 +2406,15 @@ function renderRqQuestion() {
 }
 
 function showRqSummary() {
+  stopRqTimer();
   document.getElementById("quizPlayPanel").style.display = "none";
   document.getElementById("quizSummaryPanel").style.display = "block";
   const total = rqQuestions.length;
+  const answeredCount = Math.min(rqIndex, total);
   document.getElementById("rqSummaryText").textContent = "答對 " + rqCorrect + " / " + total + " 題";
-  const pct = total > 0 ? Math.round((rqCorrect / total) * 100) : 0;
-  document.getElementById("rqSummarySub").textContent = "正確率 " + pct + "%";
+  const pct = answeredCount > 0 ? Math.round((rqCorrect / answeredCount) * 100) : 0;
+  document.getElementById("rqSummarySub").textContent =
+    (answeredCount < total ? "時間到!已作答 " + answeredCount + " 題 ・ " : "") + "正確率 " + pct + "%";
 }
 
 document.getElementById("rqRestartBtn").onclick = () => showRandomQuizSetup();
