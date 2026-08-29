@@ -896,6 +896,9 @@
       <div class="modal-title">輸入挑戰者 ID</div>
       <input type="text" id="playerIdInput" placeholder="例如:小明、座號3號">
       <div class="field-error" id="loginError" style="display:none;">請輸入 ID</div>
+      <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="playerPinInput" placeholder="設定/輸入 4 位數通行碼" style="margin-top:10px;">
+      <div class="hint" style="margin:4px 0 0;">第一次使用這個 ID 會自動設定成你的通行碼,之後要輸入一樣的碼才能繼續,別人才不能用同名字看到你的進度</div>
+      <div class="field-error" id="loginPinError" style="display:none;">通行碼錯誤,如果這不是你的 ID,請換一個名字</div>
       <div class="modal-btn-row">
         <button class="modal-btn-cancel" id="loginCancelBtn">取消</button>
         <button class="modal-btn-confirm" id="loginConfirmBtn">開始挑戰</button>
@@ -2209,7 +2212,9 @@ document.querySelectorAll(".mode-btn").forEach(btn => {
     if (mode === "challenge") {
       if (FIREBASE_ENABLED) {
         document.getElementById("playerIdInput").value = currentPlayerId || "";
+        document.getElementById("playerPinInput").value = "";
         document.getElementById("loginError").style.display = "none";
+        document.getElementById("loginPinError").style.display = "none";
         document.getElementById("loginModalOverlay").style.display = "flex";
         document.getElementById("playerIdInput").focus();
       } else {
@@ -2227,46 +2232,86 @@ document.getElementById("loginCancelBtn").onclick = () => {
 
 document.getElementById("loginConfirmBtn").onclick = async () => {
   const id = document.getElementById("playerIdInput").value.trim();
+  const pin = document.getElementById("playerPinInput").value.trim();
+  document.getElementById("loginError").style.display = "none";
+  document.getElementById("loginPinError").style.display = "none";
+
   if (!id) {
     document.getElementById("loginError").style.display = "block";
     return;
   }
+  if (!pin) {
+    document.getElementById("loginPinError").textContent = "請設定/輸入 4 位數通行碼";
+    document.getElementById("loginPinError").style.display = "block";
+    return;
+  }
+
   const confirmBtn = document.getElementById("loginConfirmBtn");
   confirmBtn.disabled = true;
   confirmBtn.textContent = "載入中...";
 
-  currentPlayerId = id;
-  currentAnswered = {};
-  totalScore = 0;
+  let loginOk = true;
 
   try {
-    const doc = await db.collection("players").doc(id).get();
+    const docRef = db.collection("players").doc(id);
+    const doc = await docRef.get();
     if (doc.exists) {
       const data = doc.data();
-      totalScore = data.score || 0;
-      if (data.progress && typeof data.progress === "object") {
-        currentAnswered = data.progress;
-      } else if (data.birdsDone) {
-        const birdsDone = data.birdsDone;
-        Object.keys(birdsDone).forEach(birdId => {
-          if (birdsDone[birdId]) {
-            currentAnswered[birdId + "_done"] = true;
-            currentAnswered[birdId + "_captured"] = true;
-          }
-        });
+      if (data.pin && data.pin !== pin) {
+        loginOk = false;
+        document.getElementById("loginPinError").textContent = "通行碼錯誤,如果這不是你的 ID,請換一個名字";
+        document.getElementById("loginPinError").style.display = "block";
+      } else {
+        currentPlayerId = id;
+        currentAnswered = {};
+        totalScore = data.score || 0;
+        if (data.progress && typeof data.progress === "object") {
+          currentAnswered = data.progress;
+        } else if (data.birdsDone) {
+          const birdsDone = data.birdsDone;
+          Object.keys(birdsDone).forEach(birdId => {
+            if (birdsDone[birdId]) {
+              currentAnswered[birdId + "_done"] = true;
+              currentAnswered[birdId + "_captured"] = true;
+            }
+          });
+        }
+        if (!data.pin) {
+          await docRef.set({ pin: pin }, { merge: true });
+        }
       }
+    } else {
+      currentPlayerId = id;
+      currentAnswered = {};
+      totalScore = 0;
+      await docRef.set({
+        id: id,
+        pin: pin,
+        score: 0,
+        progress: {},
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
     }
   } catch (err) {
     console.error("讀取進度失敗", err);
+    loginOk = false;
+    document.getElementById("loginPinError").textContent = "連線失敗,請再試一次:" + err.message;
+    document.getElementById("loginPinError").style.display = "block";
   }
 
   confirmBtn.disabled = false;
   confirmBtn.textContent = "開始挑戰";
-  document.getElementById("loginModalOverlay").style.display = "none";
-  showChallengeMenu();
+
+  if (loginOk) {
+    document.getElementById("loginModalOverlay").style.display = "none";
+    showChallengeMenu();
+  }
 };
 
 document.getElementById("playerIdInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("loginConfirmBtn").click();
+});
+document.getElementById("playerPinInput").addEventListener("keydown", (e) => {
   if (e.key === "Enter") document.getElementById("loginConfirmBtn").click();
 });
 
