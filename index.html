@@ -1120,11 +1120,20 @@ const CONDITIONS = [
 ];
 
 const LEVEL_REQUIRED = { 1: 3, 2: 6, 3: 10, 4: 15 };
-const LEVEL_WEIGHT = { 1: 1, 2: 2, 3: 3, 4: 4 };
+
+// 完成分數:依這隻鳥「需答對題數」落在哪個區間決定一次性獎勵分數
+// 1-3題→1分 / 4-6題→2分 / 7-9題→3分 / 10-12題→5分 / 13-15題→7分
+function weightForRequiredCorrect(rc) {
+  if (rc <= 3) return 1;
+  if (rc <= 6) return 2;
+  if (rc <= 9) return 3;
+  if (rc <= 12) return 5;
+  return 7;
+}
 let totalScore = 0;
 
 function getMaxScore() {
-  return birds.reduce((sum, b) => sum + CONDITIONS.length * (LEVEL_WEIGHT[b.level] || 1), 0);
+  return birds.reduce((sum, b) => sum + weightForRequiredCorrect(b.requiredCorrect), 0);
 }
 
 function updateScoreBar() {
@@ -1556,7 +1565,12 @@ function attemptCapture() {
   if (!birdVanished && dist < HIT_RADIUS) {
     playHitSound();
     if (!currentAnswered[bird.id]) currentAnswered[bird.id] = {};
+    const alreadyCaptured = currentAnswered[bird.id + "_captured"] === true;
     currentAnswered[bird.id + "_captured"] = true;
+    if (GAME_MODE === "challenge" && !alreadyCaptured) {
+      totalScore += weightForRequiredCorrect(bird.requiredCorrect);
+      updateScoreBar();
+    }
     statusEl.textContent = "拍攝成功!";
     statusEl.className = "capture-status ok";
     const flash = document.createElement("div");
@@ -1750,11 +1764,6 @@ function renderQuiz() {
       const isCorrect = acceptedValues.includes(opt);
       answered[cond.key] = isCorrect;
       answered[cond.key + "_picked"] = opt;
-      if (isCorrect && GAME_MODE === "challenge") {
-        totalScore += (LEVEL_WEIGHT[bird.level] || 1);
-        updateScoreBar();
-        saveProgress();
-      }
       document.getElementById("correctCount").textContent = Object.values(answered).filter(v => v === true).length;
       Array.from(optGrid.children).forEach(otherBtn => {
         otherBtn.classList.add("locked");
@@ -2054,6 +2063,8 @@ function activateMode(mode) {
   document.querySelectorAll(".mode-btn").forEach(b => {
     b.classList.toggle("active", b.dataset.mode === mode);
   });
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById("view-game").classList.add("active");
   GAME_MODE = mode;
   document.getElementById("bird-list-panel").style.display = "block";
   document.getElementById("quiz-panel").style.display = "none";
