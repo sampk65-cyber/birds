@@ -1734,19 +1734,19 @@ function buildSceneSVG(elevation, season, uid) {
 // ---------- 範例資料(12 項全滿範本) ----------
 let birds = [
   {
-    id: "mikado_pheasant",
-    name: "帝雉",
-    level: 4,
-    requiredCorrect: 15,
-    speed: 260,
-    season: "夏",
+    id: "eurasian_tree_sparrow",
+    name: "麻雀",
+    level: 1,
+    requiredCorrect: 3,
+    speed: 90,
+    season: "春",
     conditions: {
-      elevation: ["2000-2500"], family: ["雉科"], habitat: ["森林"], diet: ["雜食"],
-      predator: ["猛禽", "人類"], population: ["極危"], disturbance: ["高"], residency: ["留鳥"],
-      activity: ["晨昏活動"], nestType: ["地面巢"], size: ["中型(15-35cm)"], feature: ["尾羽特殊"],
-      eggColor: ["褐色"], eggCount: ["4-6顆"], originStatus: ["特有種"]
+      elevation: ["0-500"], family: ["文鳥科"], habitat: ["農田", "開闊草原"], diet: ["種子果實"],
+      predator: ["貓科動物", "猛禽"], population: ["普遍"], disturbance: ["低"], residency: ["留鳥"],
+      activity: ["日行性"], nestType: ["樹洞"], size: ["小型(<15cm)"], feature: ["羽色鮮豔"],
+      eggColor: ["帶斑點"], eggCount: ["4-6顆"], originStatus: ["原生種"]
     },
-    story: "帝雉是台灣特有種,雄鳥全身墨藍帶紫色光澤,尾羽有明顯白色橫紋,只棲息在中高海拔的原始針闊葉混合林中,個性隱密,清晨黃昏活動,是最難親眼目睹的台灣特有鳥種之一。"
+    story: "麻雀是台灣最常見的鳥類之一,棕褐色羽毛帶黑色斑點,喜歡成群活動,經常出現在住家附近、農田與公園。"
   },
   {
     id: "taiwan_barbet",
@@ -1764,19 +1764,19 @@ let birds = [
     story: "五色鳥身體翠綠色,頭部有紅黃黑藍等鮮豔色塊,叫聲像敲木魚一樣「郭、郭、郭」,常在低海拔樹林中鑿洞築巢。"
   },
   {
-    id: "eurasian_tree_sparrow",
-    name: "麻雀",
-    level: 1,
-    requiredCorrect: 3,
-    speed: 90,
-    season: "春",
+    id: "mikado_pheasant",
+    name: "帝雉",
+    level: 4,
+    requiredCorrect: 15,
+    speed: 260,
+    season: "夏",
     conditions: {
-      elevation: ["0-500"], family: ["文鳥科"], habitat: ["農田", "開闊草原"], diet: ["種子果實"],
-      predator: ["貓科動物", "猛禽"], population: ["普遍"], disturbance: ["低"], residency: ["留鳥"],
-      activity: ["日行性"], nestType: ["樹洞"], size: ["小型(<15cm)"], feature: ["羽色鮮豔"],
-      eggColor: ["帶斑點"], eggCount: ["4-6顆"], originStatus: ["原生種"]
+      elevation: ["2000-2500"], family: ["雉科"], habitat: ["森林"], diet: ["雜食"],
+      predator: ["猛禽", "人類"], population: ["極危"], disturbance: ["高"], residency: ["留鳥"],
+      activity: ["晨昏活動"], nestType: ["地面巢"], size: ["中型(15-35cm)"], feature: ["尾羽特殊"],
+      eggColor: ["褐色"], eggCount: ["4-6顆"], originStatus: ["特有種"]
     },
-    story: "麻雀是台灣最常見的鳥類之一,棕褐色羽毛帶黑色斑點,喜歡成群活動,經常出現在住家附近、農田與公園。"
+    story: "帝雉是台灣特有種,雄鳥全身墨藍帶紫色光澤,尾羽有明顯白色橫紋,只棲息在中高海拔的原始針闊葉混合林中,個性隱密,清晨黃昏活動,是最難親眼目睹的台灣特有鳥種之一。"
   },
   {
     id: "white_breasted_waterhen",
@@ -1853,7 +1853,7 @@ function ensureAudio() {
   Tone.start();
   clickSynth = new Tone.MembraneSynth({ pitchDecay: 0.008, octaves: 2, volume: -6 }).toDestination();
   chimeSynth = new Tone.Synth({ oscillator: { type: "sine" }, volume: -4 }).toDestination();
-  musicSynth = new Tone.Synth({ oscillator: { type: "triangle" }, volume: -18 }).toDestination();
+  musicSynth = new Tone.Synth({ oscillator: { type: "triangle" }, volume: -12 }).toDestination();
   const melody = ["C5", "E5", "G5", "E5", "D5", "F5", "A5", "F5", "E5", "G5", "C6", "G5"];
   let melodyIndex = 0;
   musicLoop = new Tone.Loop((time) => {
@@ -1891,19 +1891,32 @@ function playMissSound() {
   chimeSynth.triggerAttackRelease("A3", "16n", now);
   chimeSynth.triggerAttackRelease("F3", "8n", now + 0.1);
 }
-function startMusic() {
+async function startMusic() {
   ensureAudio();
 
-  // 每次進入快門遊戲都重新排程原本背景旋律。
-  // 避免歡迎畫面音樂或先前 Transport 狀態造成 musicLoop 沒有重新啟動。
+  // Android / Chrome 必須在使用者操作後真正喚醒 AudioContext，
+  // 否則 Transport 雖然 started，實際仍可能完全無聲。
+  try { await Tone.start(); } catch (e) {}
+  try {
+    if (Tone.context && Tone.context.state !== "running" && Tone.context.resume) {
+      await Tone.context.resume();
+    }
+  } catch (e) {}
+
+  // 每次進入快門遊戲重新排程背景旋律，避免前一次 stop 後 Loop 沒重啟。
   try { musicLoop.stop(); } catch (e) {}
   try {
     if (Tone.Transport.state === "started") Tone.Transport.stop();
+    Tone.Transport.cancel(0);
     Tone.Transport.position = 0;
   } catch (e) {}
 
-  musicLoop.start(0);
-  Tone.Transport.start();
+  try {
+    musicLoop.start(0);
+    Tone.Transport.start("+0.03");
+  } catch (e) {
+    console.warn("遊戲背景音樂啟動失敗", e);
+  }
 }
 function stopMusic() {
   if (musicLoop) musicLoop.stop();
@@ -2328,7 +2341,7 @@ function renderQuiz() {
         answered[cond.key] = true;
         answered[cond.key + "_picked"] = acceptedValues[0];
         renderQuiz();
-      }, 1500);
+      }, 700);
     };
     labelRow.appendChild(hintBtn);
   }
@@ -2347,6 +2360,7 @@ function renderQuiz() {
     btn.onclick = () => {
       if (answered[cond.key] !== undefined) return;
       const isCorrect = acceptedValues.includes(opt);
+      if (isCorrect) playHitSound(); else playMissSound();
       answered[cond.key] = isCorrect;
       answered[cond.key + "_picked"] = opt;
       document.getElementById("correctCount").textContent = Object.values(answered).filter(v => v === true).length;
@@ -2359,7 +2373,7 @@ function renderQuiz() {
           otherBtn.classList.add("also-correct");
         }
       });
-      setTimeout(renderQuiz, 1900);
+      setTimeout(renderQuiz, 700);
     };
     optGrid.appendChild(btn);
   });
@@ -3187,7 +3201,12 @@ function renderRqQuestion() {
     btn.textContent = opt;
     btn.onclick = () => {
       const isCorrect = q.accepted.includes(opt);
-      if (isCorrect) rqCorrect++;
+      if (isCorrect) {
+        rqCorrect++;
+        playHitSound();
+      } else {
+        playMissSound();
+      }
       Array.from(grid.children).forEach(c => {
         c.classList.add("locked");
         if (c === btn) {
