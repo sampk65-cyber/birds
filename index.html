@@ -977,30 +977,56 @@
     45% { transform: scale(0.94); box-shadow: 0 0 0 5px rgba(255,255,255,0.22); }
     100% { transform: scale(1); }
   }
+  /* 遊戲解說提示：取消整個鳥框閃光，改為中央問號圓圈暗亮脈動 */
   #birdGrid.tiffany-pulse .bird-tile {
-    animation: tiffanyBirdGlow 1.05s ease-in-out infinite alternate;
-    border-color: rgba(10, 186, 181, 0.85);
+    animation: none;
+    border-color: var(--border);
+    box-shadow: none;
+    transform: none;
   }
-  #birdGrid.tiffany-pulse .bird-tile:nth-child(2) { animation-delay: 0.12s; }
-  #birdGrid.tiffany-pulse .bird-tile:nth-child(3) { animation-delay: 0.24s; }
-  #birdGrid.tiffany-pulse .bird-tile:nth-child(4) { animation-delay: 0.36s; }
-  @keyframes tiffanyBirdGlow {
-    0% {
-      box-shadow: 0 0 0 1px rgba(10,186,181,0.20), 0 0 10px rgba(10,186,181,0.18);
-      transform: translateY(0);
+  #birdGrid.tiffany-pulse .mystery-qmark {
+    animation: qmarkPulse 1.05s ease-in-out infinite;
+    box-shadow: 0 0 0 0 rgba(129, 216, 208, 0.0);
+  }
+  #birdGrid.tiffany-pulse .mystery-qmark::after {
+    content: "按我";
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 7px);
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #0a8f89;
+    text-shadow: 0 0 6px rgba(129,216,208,0.55);
+  }
+  @keyframes qmarkPulse {
+    0%, 100% {
+      background: rgba(28, 24, 16, 0.72);
+      color: rgba(255,255,255,0.72);
+      box-shadow: 0 0 0 0 rgba(129,216,208,0.00), 0 0 6px rgba(129,216,208,0.10);
+      filter: brightness(0.75);
+      transform: translate(-50%, -50%) scale(0.98);
     }
-    100% {
-      box-shadow: 0 0 0 3px rgba(10,186,181,0.55), 0 0 22px rgba(10,186,181,0.78), 0 0 34px rgba(160,255,250,0.36);
-      transform: translateY(-2px);
+    50% {
+      background: rgba(18, 151, 145, 0.92);
+      color: #fff;
+      box-shadow: 0 0 0 7px rgba(129,216,208,0.22), 0 0 18px rgba(129,216,208,0.88), 0 0 30px rgba(177,255,249,0.45);
+      filter: brightness(1.22);
+      transform: translate(-50%, -50%) scale(1.08);
     }
   }
   @media (prefers-reduced-motion: reduce) {
     .mode-btn.mode-feedback,
-    #birdGrid.tiffany-pulse .bird-tile {
+    #birdGrid.tiffany-pulse .mystery-qmark {
       animation: none;
     }
-    #birdGrid.tiffany-pulse .bird-tile {
-      box-shadow: 0 0 0 3px rgba(10,186,181,0.45), 0 0 18px rgba(10,186,181,0.50);
+    #birdGrid.tiffany-pulse .mystery-qmark {
+      background: rgba(18, 151, 145, 0.92);
+      color: #fff;
+      box-shadow: 0 0 0 6px rgba(129,216,208,0.20), 0 0 18px rgba(129,216,208,0.60);
     }
   }
 
