@@ -1872,6 +1872,7 @@ async function primeGameAudio() {
       await Tone.context.resume();
     }
   } catch (e) {}
+  return !Tone.context || Tone.context.state === "running";
 }
 
 function playShutterClick() {
@@ -1902,26 +1903,26 @@ function playMissSound() {
   chimeSynth.triggerAttackRelease("A3", "16n", now, 0.38);
   chimeSynth.triggerAttackRelease("F3", "8n", now + 0.1, 0.38);
 }
-function startMusic() {
+async function startMusic() {
   ensureAudio();
+  await primeGameAudio();
 
-  // 音訊權限已在模式按鈕的直接使用者操作中取得；
-  // 這裡只重新排程並播放快門遊戲音樂。
+  // Transport 保留運作；每次只重掛遊戲 Loop，避免第二次從 0 秒排程失效。
   try { musicLoop.stop(); } catch (e) {}
   try {
-    if (Tone.Transport.state === "started") Tone.Transport.stop();
-    Tone.Transport.cancel(0);
-    Tone.Transport.position = 0;
-    musicLoop.start(0);
-    Tone.Transport.start("+0.03");
+    if (Tone.Transport.state !== "started") {
+      Tone.Transport.start("+0.03");
+    }
+    const startAt = Tone.Transport.seconds + 0.05;
+    musicLoop.start(startAt);
   } catch (e) {
     console.warn("遊戲背景音樂啟動失敗", e);
   }
 }
 
 function stopMusic() {
-  if (musicLoop) musicLoop.stop();
-  if (Tone.Transport.state === "started") Tone.Transport.stop();
+  // 只停止遊戲旋律，不停止共用 Transport / AudioContext。
+  try { if (musicLoop) musicLoop.stop(); } catch (e) {}
 }
 
 // ---------- 歡迎主頁：雙圖 5 秒循環淡出 + 5 秒柔和音樂 ----------
@@ -1930,24 +1931,44 @@ let homeWelcomeSynth = null;
 let homeWelcomeCycleTimer = null;
 let homeWelcomeShowingPhoto = true;
 
-function playHomeWelcomeMusic() {
+async function playHomeWelcomeMusic() {
   try {
     ensureAudio();
-    if (homeWelcomeSynth) { try { homeWelcomeSynth.dispose(); } catch (e) {} homeWelcomeSynth = null; }
-    if (homeWelcomeAudioTimer) clearTimeout(homeWelcomeAudioTimer);
+    await primeGameAudio();
+
+    if (homeWelcomeSynth) {
+      try { homeWelcomeSynth.releaseAll(); } catch (e) {}
+      try { homeWelcomeSynth.dispose(); } catch (e) {}
+      homeWelcomeSynth = null;
+    }
+    if (homeWelcomeAudioTimer) {
+      clearTimeout(homeWelcomeAudioTimer);
+      homeWelcomeAudioTimer = null;
+    }
+
     homeWelcomeSynth = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: "sine" },
       envelope: { attack: 0.12, decay: 0.25, sustain: 0.18, release: 1.15 },
       volume: -22
     }).toDestination();
+
+    const synthForThisPlay = homeWelcomeSynth;
     const now = Tone.now() + 0.05;
     [["C5",0],["E5",0.82],["G5",1.64],["E5",2.46],["D5",3.28],["G5",4.10]].forEach(([note,offset]) => {
-      homeWelcomeSynth.triggerAttackRelease(note, "2n", now + offset);
+      synthForThisPlay.triggerAttackRelease(note, "2n", now + offset);
     });
+
     homeWelcomeAudioTimer = setTimeout(() => {
-      if (homeWelcomeSynth) { try { homeWelcomeSynth.dispose(); } catch (e) {} homeWelcomeSynth = null; }
+      if (homeWelcomeSynth === synthForThisPlay) {
+        try { synthForThisPlay.releaseAll(); } catch (e) {}
+        try { synthForThisPlay.dispose(); } catch (e) {}
+        homeWelcomeSynth = null;
+      }
+      homeWelcomeAudioTimer = null;
     }, 5200);
-  } catch (e) {}
+  } catch (e) {
+    console.warn("歡迎音樂啟動失敗", e);
+  }
 }
 
 function applyHomeWelcomeFrame() {
@@ -2917,7 +2938,9 @@ function saveProgress() {
   }, { merge: true }).catch(err => console.error("儲存進度失敗", err));
 }
 
-function backToHome() {
+async function backToHome() {
+  // 回主頁時先恢復 AudioContext，確保第二次以後歡迎音樂仍可播放。
+  await primeGameAudio();
   window.__birdGuideGameLayerEntered = false;
   stopCaptureGame();
   stopRqTimer();
@@ -2942,9 +2965,9 @@ function showChallengeMenu() {
 }
 
 document.querySelectorAll(".mode-btn").forEach(btn => {
-  btn.onclick = () => {
+  btn.onclick = async () => {
     const mode = btn.dataset.mode;
-    primeGameAudio();
+    await primeGameAudio();
     flashModeButton(btn);
     playModeSelectSound(mode);
     speakGuide(mode === "challenge" ? "請輸入個人專屬帳號密碼" : "請選擇一隻鳥");
