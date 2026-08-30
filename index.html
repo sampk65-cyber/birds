@@ -1204,7 +1204,7 @@
     <div class="home-hero-content">
       <header class="app-header">
         <h1 id="heroTitle">小小鳥類解說員</h1>
-        <p id="heroSubtitle">FIELD GUIDE PROTOTYPE</p>
+        <p id="heroSubtitle">Field Guide Vresion2. 0</p>
       </header>
 
       <div class="mode-select" id="modeSelect">
@@ -1850,7 +1850,6 @@ let clickSynth, chimeSynth, musicSynth, musicLoop;
 function ensureAudio() {
   if (audioStarted) return;
   audioStarted = true;
-  Tone.start();
   clickSynth = new Tone.MembraneSynth({ pitchDecay: 0.008, octaves: 2, volume: -6 }).toDestination();
   chimeSynth = new Tone.Synth({ oscillator: { type: "sine" }, volume: -4 }).toDestination();
   musicSynth = new Tone.Synth({ oscillator: { type: "triangle" }, volume: -12 }).toDestination();
@@ -1861,6 +1860,18 @@ function ensureAudio() {
     melodyIndex++;
   }, "8n");
   Tone.Transport.bpm.value = 96;
+}
+
+// 玩家第一次直接按「遊戲解說／正式開始」時就取得 Web Audio 權限。
+// 後續快門遊戲只負責播放／停止，不再臨時喚醒 AudioContext。
+async function primeGameAudio() {
+  ensureAudio();
+  try { await Tone.start(); } catch (e) {}
+  try {
+    if (Tone.context && Tone.context.state !== "running" && Tone.context.resume) {
+      await Tone.context.resume();
+    }
+  } catch (e) {}
 }
 
 function playShutterClick() {
@@ -1882,42 +1893,32 @@ function flashModeButton(btn) {
 function playHitSound() {
   ensureAudio();
   const now = Tone.now();
-  chimeSynth.triggerAttackRelease("E6", "8n", now);
-  chimeSynth.triggerAttackRelease("C6", "8n", now + 0.16);
+  chimeSynth.triggerAttackRelease("E6", "8n", now, 0.38);
+  chimeSynth.triggerAttackRelease("C6", "8n", now + 0.16, 0.38);
 }
 function playMissSound() {
   ensureAudio();
   const now = Tone.now();
-  chimeSynth.triggerAttackRelease("A3", "16n", now);
-  chimeSynth.triggerAttackRelease("F3", "8n", now + 0.1);
+  chimeSynth.triggerAttackRelease("A3", "16n", now, 0.38);
+  chimeSynth.triggerAttackRelease("F3", "8n", now + 0.1, 0.38);
 }
-async function startMusic() {
+function startMusic() {
   ensureAudio();
 
-  // Android / Chrome 必須在使用者操作後真正喚醒 AudioContext，
-  // 否則 Transport 雖然 started，實際仍可能完全無聲。
-  try { await Tone.start(); } catch (e) {}
-  try {
-    if (Tone.context && Tone.context.state !== "running" && Tone.context.resume) {
-      await Tone.context.resume();
-    }
-  } catch (e) {}
-
-  // 每次進入快門遊戲重新排程背景旋律，避免前一次 stop 後 Loop 沒重啟。
+  // 音訊權限已在模式按鈕的直接使用者操作中取得；
+  // 這裡只重新排程並播放快門遊戲音樂。
   try { musicLoop.stop(); } catch (e) {}
   try {
     if (Tone.Transport.state === "started") Tone.Transport.stop();
     Tone.Transport.cancel(0);
     Tone.Transport.position = 0;
-  } catch (e) {}
-
-  try {
     musicLoop.start(0);
     Tone.Transport.start("+0.03");
   } catch (e) {
     console.warn("遊戲背景音樂啟動失敗", e);
   }
 }
+
 function stopMusic() {
   if (musicLoop) musicLoop.stop();
   if (Tone.Transport.state === "started") Tone.Transport.stop();
@@ -2943,6 +2944,7 @@ function showChallengeMenu() {
 document.querySelectorAll(".mode-btn").forEach(btn => {
   btn.onclick = () => {
     const mode = btn.dataset.mode;
+    primeGameAudio();
     flashModeButton(btn);
     playModeSelectSound(mode);
     speakGuide(mode === "challenge" ? "請輸入個人專屬帳號密碼" : "請選擇一隻鳥");
