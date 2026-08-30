@@ -1205,43 +1205,46 @@
   .home-hero.settings-mode .game-audio-controls { display:none; }
 
 
-  /* ---- 背景音樂控制：右側小型垂直顯示（不改歡迎畫面本體） ---- */
+  /* ---- 背景音樂控制：右下鳥旁、小型垂直顯示（其餘畫面不動） ---- */
   #gameAudioControls.compact-vertical {
     position: absolute;
     right: 10px;
-    bottom: 10px;
+    bottom: 8px;
     z-index: 8;
-    width: 66px;
+    width: 54px;
+    height: 132px;
     margin: 0;
-    padding: 7px 6px;
+    padding: 6px 4px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px;
+    justify-content: space-between;
+    gap: 4px;
     border-radius: 14px;
-    background: rgba(255,255,255,0.72);
+    background: rgba(255,255,255,0.74);
     border: 1px solid rgba(255,255,255,0.72);
     backdrop-filter: blur(5px);
     box-shadow: 0 2px 8px rgba(0,0,0,0.10);
   }
   #gameAudioControls.compact-vertical #gameMusicToggle {
-    width: 54px;
-    min-height: 32px;
-    padding: 4px 3px;
-    border-radius: 10px;
-    font-size: 11px;
-    line-height: 1.15;
+    width: 46px;
+    min-height: 30px;
+    padding: 3px 2px;
+    border-radius: 9px;
+    font-size: 10.5px;
+    line-height: 1.1;
   }
   #gameAudioControls.compact-vertical #gameMusicVolume {
-    width: 52px;
+    width: 68px;
     height: 18px;
     margin: 0;
+    transform: rotate(-90deg);
+    transform-origin: center;
   }
   #gameAudioControls.compact-vertical .game-audio-volume-label {
-    font-size: 11px;
+    font-size: 10.5px;
     line-height: 1;
   }
-
 </style>
 </head>
 <body>
