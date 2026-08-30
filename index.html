@@ -913,6 +913,33 @@
     padding-bottom: 4px;
   }
 
+  /* ---- admin data mode switch: 新增 / 修改 ---- */
+  .admin-data-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 18px 0 22px;
+  }
+  .admin-data-mode-btn {
+    width: 100%;
+    min-height: 54px;
+    border-radius: 16px;
+    border: 2px solid var(--green);
+    background: var(--surface);
+    color: var(--green-dark);
+    font-family: var(--font-sans);
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(44,92,60,0.12);
+  }
+  .admin-data-mode-btn.active {
+    background: var(--green);
+    color: #fff;
+    box-shadow: 0 5px 14px rgba(44,92,60,0.28);
+  }
+  #adminModifyPanel { display: none; }
+
   /* ---- settings-only hero; main page remains unchanged ---- */
   .settings-hero-bg {
     position: absolute;
@@ -1267,7 +1294,13 @@
   <!-- ============ ADMIN VIEW ============ -->
   <div class="view" id="view-admin">
 
-    <div class="section-title form-title-emphasis" id="formSectionTitle">新增鳥類資料(編號?)</div>
+    <div class="admin-data-switch" id="adminDataSwitch">
+      <button class="admin-data-mode-btn active" id="adminAddModeBtn" type="button">新增資料</button>
+      <button class="admin-data-mode-btn" id="adminEditModeBtn" type="button">修改資料</button>
+    </div>
+
+    <div id="adminFormPanel">
+    <div class="section-title form-title-emphasis" id="formSectionTitle">新增資料</div>
     <div class="hint">15 項條件全部填寫,每項可複選多個答案,難度等級決定玩家需要答對幾項才能解鎖</div>
     <button class="hint-btn" id="cancelEditBtn" style="display:none; margin-bottom:14px;">✕ 取消編輯,改為新增鳥類</button>
 
@@ -1321,14 +1354,17 @@
     </div>
 
     <button class="save-btn" id="saveBirdBtn">存入圖鑑資料庫</button>
+    </div>
 
-    <div class="section-title">已建檔鳥類清單 <span class="list-status-badge">已建檔・可修改</span></div>
-    <div class="hint">點一下任一筆資料可以載入編輯,修改後存檔會更新該筆資料(不會變成新的一筆)</div>
-    <div id="birdListAdmin"></div>
+    <div id="adminModifyPanel">
+      <div class="section-title" style="margin-top:0;">已建檔鳥類清單 <span class="list-status-badge">已建檔・可修改</span></div>
+      <div class="hint">點一下任一筆資料，就會載入該筆內容進入修改畫面；存檔後直接更新原資料。</div>
+      <div id="birdListAdmin"></div>
 
-    <div class="section-title">匯出資料(供接 Firestore 用)</div>
-    <div class="hint">複製此 JSON,之後可直接匯入 Firestore 對應集合</div>
-    <div class="export-box" id="exportBox"></div>
+      <div class="section-title">匯出資料(供接 Firestore 用)</div>
+      <div class="hint">複製此 JSON,之後可直接匯入 Firestore 對應集合</div>
+      <div class="export-box" id="exportBox"></div>
+    </div>
 
   </div>
 
@@ -2157,11 +2193,25 @@ function compressImageFile(file, maxWidth = 1280, quality = 0.8) {
   });
 }
 
+function setAdminDataMode(mode) {
+  const addBtn = document.getElementById("adminAddModeBtn");
+  const editBtn = document.getElementById("adminEditModeBtn");
+  const formPanel = document.getElementById("adminFormPanel");
+  const modifyPanel = document.getElementById("adminModifyPanel");
+  if (!addBtn || !editBtn || !formPanel || !modifyPanel) return;
+
+  const isEditList = mode === "edit-list";
+  addBtn.classList.toggle("active", !isEditList);
+  editBtn.classList.toggle("active", isEditList);
+  formPanel.style.display = isEditList ? "none" : "block";
+  modifyPanel.style.display = isEditList ? "block" : "none";
+}
+
 let editingBirdId = null;
 
 function resetAdminForm() {
   editingBirdId = null;
-  document.getElementById("formSectionTitle").textContent = "新增鳥類資料(編號?)";
+  document.getElementById("formSectionTitle").textContent = "新增資料";
   document.getElementById("saveBirdBtn").textContent = "存入圖鑑資料庫";
   document.getElementById("cancelEditBtn").style.display = "none";
   document.getElementById("photoFieldLabel").textContent = "上傳照片(可選)";
@@ -2175,6 +2225,18 @@ function resetAdminForm() {
   document.querySelectorAll(".chk-btn.selected").forEach(el => el.classList.remove("selected"));
   document.querySelectorAll(".custom-input").forEach(el => el.value = "");
 }
+
+document.getElementById("adminAddModeBtn").onclick = () => {
+  resetAdminForm();
+  setAdminDataMode("add");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+document.getElementById("adminEditModeBtn").onclick = () => {
+  setAdminDataMode("edit-list");
+  renderAdminList();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
 
 function loadBirdForEdit(birdId) {
   const bird = birds.find(b => b.id === birdId);
@@ -2517,7 +2579,17 @@ function renderAdminList() {
     const row = document.createElement("div");
     row.className = "list-row list-row-clickable";
     row.innerHTML = `<span><span class="idx">No. ${String(i + 1).padStart(3, "0")}</span>${b.name}</span><span class="tag">LV.${b.level} ・ 需答對 ${b.requiredCorrect} 項</span>`;
-    row.onclick = () => loadBirdForEdit(b.id);
+    row.onclick = () => {
+      loadBirdForEdit(b.id);
+      setAdminDataMode("add");
+      const addBtn = document.getElementById("adminAddModeBtn");
+      const editBtn = document.getElementById("adminEditModeBtn");
+      if (addBtn && editBtn) {
+        addBtn.classList.remove("active");
+        editBtn.classList.add("active");
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
     list.appendChild(row);
   });
 }
