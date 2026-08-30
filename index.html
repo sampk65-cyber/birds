@@ -1057,6 +1057,85 @@
     }
   }
 
+
+  /* ---- V14.2 挑戰安全 + 回上一頁動態島 + 總挑戰「我是誰？」 ---- */
+  #endRandomChallengeBtn {
+    width: 100%;
+    margin: 0 0 14px;
+    padding: 13px 16px;
+    border: 2px solid rgba(227,91,78,0.45);
+    border-radius: 999px;
+    background: rgba(227,91,78,0.12);
+    color: #B83F35;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+  #endRandomChallengeBtn:active { transform: scale(0.97); }
+
+  body.challenge-running .top-right-nav,
+  body.challenge-running #modeSelect,
+  body.challenge-running #settingsSubnav {
+    pointer-events: none !important;
+    opacity: 0.42;
+  }
+  body.challenge-running .view:not(#view-random-quiz):not(#view-game) {
+    pointer-events: none !important;
+  }
+  body.challenge-running #floatingBackIsland { pointer-events: auto !important; opacity: 1 !important; }
+
+  .who-am-i-meme {
+    position: absolute;
+    left: 50%;
+    top: 45%;
+    transform: translate(-50%, -50%) rotate(-2deg);
+    z-index: 5;
+    width: 92%;
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+    font-family: Impact, "Arial Black", var(--font-sans);
+    font-size: clamp(46px, 13vw, 72px);
+    font-weight: 900;
+    line-height: 0.92;
+    letter-spacing: 2px;
+    color: #fff;
+    -webkit-text-stroke: 2px rgba(0,0,0,0.82);
+    text-shadow: 0 4px 0 rgba(0,0,0,0.75), 0 7px 18px rgba(0,0,0,0.55);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+
+  .floating-back-island {
+    position: fixed;
+    right: 18px;
+    bottom: 24px;
+    z-index: 120;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-width: 128px;
+    height: 52px;
+    padding: 0 20px;
+    border: 2px solid rgba(255,255,255,0.82);
+    border-radius: 999px;
+    background: rgba(227,91,78,0.94);
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: .5px;
+    box-shadow: 0 8px 24px rgba(91,45,34,0.28), inset 0 1px 0 rgba(255,255,255,0.35);
+    backdrop-filter: blur(8px);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+  .floating-back-island.show { display: flex; }
+  .floating-back-island.dragging { cursor: grabbing; transform: scale(1.03); }
+  .floating-back-island:active { box-shadow: 0 5px 16px rgba(91,45,34,0.34); }
+
 </style>
 </head>
 <body>
@@ -1150,6 +1229,7 @@
           <div class="mystery-placeholder" id="revealMysteryPlaceholder"></div>
           <img class="reveal-photo" id="revealPhoto" alt="">
           <div class="veil" id="veil"></div>
+          <div class="who-am-i-meme" id="whoAmIMeme" style="display:none;">我是誰？</div>
           <div class="viewfinder-corners">
             <div class="corner tl"></div><div class="corner tr"></div>
             <div class="corner bl"></div><div class="corner br"></div>
@@ -1225,6 +1305,7 @@
       <button class="back-link" id="randomQuizBackBtn">← 返回選單</button>
     </div>
     <div id="quizPlayPanel" style="display:none;">
+      <button type="button" id="endRandomChallengeBtn">結束挑戰</button>
       <div class="progress-line" id="rqProgress"></div>
       <div class="rq-timer" id="rqTimer"></div>
       <div class="card" id="rqQuestionArea"></div>
@@ -1375,6 +1456,9 @@
   </div>
 
 </div>
+
+
+<button type="button" class="floating-back-island" id="floatingBackIsland" aria-label="回上一頁">← 回上一頁</button>
 
 <script>
 // ---------- Firebase 設定(在下面填入你自己專案的設定值,留空就會停用上傳功能,其他功能不受影響) ----------
@@ -1687,6 +1771,7 @@ function renderBirdGrid() {
 
 function openQuiz(birdId) {
   document.getElementById("birdGrid").classList.remove("tiffany-pulse");
+  if (GAME_MODE === "challenge") setChallengeInteractionLock(true);
   currentBirdId = birdId;
   document.getElementById("bird-list-panel").style.display = "none";
   document.getElementById("quiz-panel").style.display = "block";
@@ -1695,6 +1780,7 @@ function openQuiz(birdId) {
 
 document.getElementById("backBtn").onclick = () => {
   stopCaptureGame();
+  setChallengeInteractionLock(false);
   document.getElementById("bird-list-panel").style.display = "block";
   document.getElementById("quiz-panel").style.display = "none";
   renderBirdGrid();
@@ -1954,6 +2040,15 @@ function renderQuiz() {
   const answered = currentAnswered[bird.id];
   const correctSoFar = Object.values(answered).filter(v => v === true).length;
   document.getElementById("correctCount").textContent = correctSoFar;
+
+  const whoAmI = document.getElementById("whoAmIMeme");
+  if (whoAmI) {
+    const memeProgress = Math.min(correctSoFar / Math.max(bird.requiredCorrect, 1), 1);
+    const showMeme = GAME_MODE === "challenge" && currentAnswered[bird.id + "_captured"] !== true;
+    whoAmI.style.display = showMeme ? "block" : "none";
+    whoAmI.style.opacity = showMeme ? String(Math.max(0, 1 - memeProgress)) : "0";
+    whoAmI.style.transform = "translate(-50%, -50%) rotate(-2deg) scale(" + (1 - memeProgress * 0.12) + ")";
+  }
 
   const captured = currentAnswered[bird.id + "_captured"] === true;
   const unlocked = correctSoFar >= bird.requiredCorrect;
@@ -2602,6 +2697,7 @@ function renderExport() {
 let currentPlayerId = null;
 
 function activateMode(mode) {
+  window.__birdGuideGameLayerEntered = true;
   stopCaptureGame();
   document.querySelectorAll(".mode-btn").forEach(b => {
     b.classList.toggle("active", b.dataset.mode === mode);
@@ -2653,15 +2749,19 @@ function saveProgress() {
 }
 
 function backToHome() {
+  window.__birdGuideGameLayerEntered = false;
   stopCaptureGame();
   stopRqTimer();
+  setChallengeInteractionLock(false);
   document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
 }
 
 function showChallengeMenu() {
+  window.__birdGuideGameLayerEntered = true;
   stopCaptureGame();
   stopRqTimer();
+  setChallengeInteractionLock(false);
   document.querySelectorAll(".mode-btn").forEach(b => {
     b.classList.toggle("active", b.dataset.mode === "challenge");
   });
@@ -2793,6 +2893,11 @@ let rqIndex = 0;
 let rqCorrect = 0;
 let rqTimerRemaining = 0;
 let rqTimerInterval = null;
+let rqEndReason = "";
+
+function setChallengeInteractionLock(locked) {
+  document.body.classList.toggle("challenge-running", !!locked);
+}
 
 function stopRqTimer() {
   if (rqTimerInterval) {
@@ -2810,6 +2915,7 @@ function startRqTimer(totalSeconds) {
     updateRqTimerDisplay();
     if (rqTimerRemaining <= 0) {
       stopRqTimer();
+      rqEndReason = "timeout";
       showRqSummary();
     }
   }, 1000);
@@ -2826,6 +2932,8 @@ function updateRqTimerDisplay() {
 
 function showRandomQuizSetup() {
   stopRqTimer();
+  rqEndReason = "";
+  setChallengeInteractionLock(false);
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
   document.getElementById("view-random-quiz").classList.add("active");
   document.getElementById("quizSetupPanel").style.display = "block";
@@ -2867,12 +2975,15 @@ document.getElementById("startRandomQuizBtn").onclick = () => {
   rqCorrect = 0;
   document.getElementById("quizSetupPanel").style.display = "none";
   document.getElementById("quizPlayPanel").style.display = "block";
+  rqEndReason = "running";
+  setChallengeInteractionLock(true);
   startRqTimer(n <= 50 ? 60 : 120);
   renderRqQuestion();
 };
 
 function renderRqQuestion() {
   if (rqIndex >= rqQuestions.length) {
+    rqEndReason = "complete";
     showRqSummary();
     return;
   }
@@ -2921,15 +3032,27 @@ function renderRqQuestion() {
 
 function showRqSummary() {
   stopRqTimer();
+  setChallengeInteractionLock(false);
   document.getElementById("quizPlayPanel").style.display = "none";
   document.getElementById("quizSummaryPanel").style.display = "block";
   const total = rqQuestions.length;
   const answeredCount = Math.min(rqIndex, total);
   document.getElementById("rqSummaryText").textContent = "答對 " + rqCorrect + " / " + total + " 題";
   const pct = answeredCount > 0 ? Math.round((rqCorrect / answeredCount) * 100) : 0;
-  document.getElementById("rqSummarySub").textContent =
-    (answeredCount < total ? "時間到!已作答 " + answeredCount + " 題 ・ " : "") + "正確率 " + pct + "%";
+  const prefix = rqEndReason === "manual"
+    ? "已手動結束挑戰 ・ 已作答 " + answeredCount + " 題 ・ "
+    : (answeredCount < total ? "時間到!已作答 " + answeredCount + " 題 ・ " : "");
+  document.getElementById("rqSummarySub").textContent = prefix + "正確率 " + pct + "%";
 }
+
+function endRandomQuizEarly() {
+  if (document.getElementById("quizPlayPanel").style.display === "none") return;
+  if (!confirm("確定要結束目前挑戰嗎？")) return;
+  rqEndReason = "manual";
+  showRqSummary();
+}
+
+document.getElementById("endRandomChallengeBtn").onclick = endRandomQuizEarly;
 
 document.getElementById("rqRestartBtn").onclick = () => showRandomQuizSetup();
 document.getElementById("rqBackToMenuBtn").onclick = () => showChallengeMenu();
@@ -3167,6 +3290,141 @@ function renderScenePreview() {
     });
   });
 }
+
+
+// ---------- 全層級「回上一頁」動態島 ----------
+(function initFloatingBackIsland() {
+  const btn = document.getElementById("floatingBackIsland");
+  if (!btn) return;
+
+  let dragging = false;
+  let moved = false;
+  let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+  const MOVE_THRESHOLD = 7;
+
+  function clampPosition(left, top) {
+    const w = btn.offsetWidth || 128;
+    const h = btn.offsetHeight || 52;
+    return {
+      left: Math.max(8, Math.min(left, window.innerWidth - w - 8)),
+      top: Math.max(8, Math.min(top, window.innerHeight - h - 8))
+    };
+  }
+
+  function restorePosition() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("birdguide_back_island_pos") || "null");
+      if (saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)) {
+        const pos = clampPosition(saved.left, saved.top);
+        btn.style.left = pos.left + "px";
+        btn.style.top = pos.top + "px";
+        btn.style.right = "auto";
+        btn.style.bottom = "auto";
+      }
+    } catch (e) {}
+  }
+
+  function savePosition() {
+    const r = btn.getBoundingClientRect();
+    try { localStorage.setItem("birdguide_back_island_pos", JSON.stringify({left:r.left, top:r.top})); } catch(e) {}
+  }
+
+  function isBelowHome() {
+    const active = document.querySelector(".view.active");
+    if (!active) return false;
+    if (active.id === "view-admin" || active.id === "view-preview" || active.id === "view-groups" ||
+        active.id === "view-challenge-menu" || active.id === "view-random-quiz" || active.id === "view-gallery") return true;
+    if (active.id === "view-game") {
+      const quiz = document.getElementById("quiz-panel");
+      const list = document.getElementById("bird-list-panel");
+      if (quiz && quiz.style.display !== "none") return true;
+      // 只有使用者真的按過遊戲解說 / 正式開始後，鳥類列表才視為下一層；避免主頁初始狀態誤顯示
+      return !!(list && list.style.display !== "none" && window.__birdGuideGameLayerEntered === true);
+    }
+    return false;
+  }
+
+  window.updateFloatingBackVisibility = function() {
+    btn.classList.toggle("show", isBelowHome());
+  };
+
+  function goBackOneLayer() {
+    const active = document.querySelector(".view.active");
+    if (!active) return;
+
+    if (active.id === "view-random-quiz") {
+      const play = document.getElementById("quizPlayPanel");
+      const summary = document.getElementById("quizSummaryPanel");
+      if (play && play.style.display !== "none") { endRandomQuizEarly(); return; }
+      if (summary && summary.style.display !== "none") { showChallengeMenu(); return; }
+      showChallengeMenu(); return;
+    }
+    if (active.id === "view-gallery") {
+      const detail = document.getElementById("galleryDetailPanel");
+      if (detail && detail.style.display !== "none") {
+        document.getElementById("galleryDetailBackBtn").click();
+      } else showChallengeMenu();
+      return;
+    }
+    if (active.id === "view-challenge-menu") { backToHome(); return; }
+    if (active.id === "view-groups") { exitGroups(); return; }
+    if (active.id === "view-admin" || active.id === "view-preview") { exitSettings(); return; }
+    if (active.id === "view-game") {
+      const quiz = document.getElementById("quiz-panel");
+      if (quiz && quiz.style.display !== "none") {
+        if (GAME_MODE === "challenge" && document.body.classList.contains("challenge-running")) {
+          if (!confirm("確定要離開目前這隻鳥的挑戰嗎？")) return;
+        }
+        document.getElementById("backBtn").click();
+      } else if (GAME_MODE === "challenge") {
+        showChallengeMenu();
+      } else {
+        backToHome();
+      }
+    }
+  }
+
+  btn.addEventListener("pointerdown", (e) => {
+    dragging = true; moved = false;
+    startX = e.clientX; startY = e.clientY;
+    const r = btn.getBoundingClientRect();
+    startLeft = r.left; startTop = r.top;
+    btn.setPointerCapture(e.pointerId);
+    btn.classList.add("dragging");
+  });
+  btn.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    if (Math.hypot(dx, dy) > MOVE_THRESHOLD) moved = true;
+    if (!moved) return;
+    const pos = clampPosition(startLeft + dx, startTop + dy);
+    btn.style.left = pos.left + "px";
+    btn.style.top = pos.top + "px";
+    btn.style.right = "auto";
+    btn.style.bottom = "auto";
+  });
+  btn.addEventListener("pointerup", () => {
+    if (!dragging) return;
+    dragging = false;
+    btn.classList.remove("dragging");
+    if (moved) savePosition(); else goBackOneLayer();
+  });
+  btn.addEventListener("pointercancel", () => { dragging = false; btn.classList.remove("dragging"); });
+  window.addEventListener("resize", () => {
+    if (btn.style.left) {
+      const r = btn.getBoundingClientRect();
+      const pos = clampPosition(r.left, r.top);
+      btn.style.left = pos.left + "px"; btn.style.top = pos.top + "px";
+    }
+  });
+
+  const observer = new MutationObserver(() => requestAnimationFrame(window.updateFloatingBackVisibility));
+  document.querySelectorAll(".view, #bird-list-panel, #quiz-panel, #quizSetupPanel, #quizPlayPanel, #quizSummaryPanel, #galleryListPanel, #galleryDetailPanel, #settingsSubnav").forEach(el => {
+    observer.observe(el, {attributes:true, attributeFilter:["class","style"]});
+  });
+  restorePosition();
+  window.updateFloatingBackVisibility();
+})();
 
 // ---------- 初始化 ----------
 async function initApp() {
