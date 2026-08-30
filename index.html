@@ -1893,10 +1893,17 @@ function playMissSound() {
 }
 function startMusic() {
   ensureAudio();
-  if (Tone.Transport.state !== "started") {
-    Tone.Transport.start();
-    musicLoop.start(0);
-  }
+
+  // 每次進入快門遊戲都重新排程原本背景旋律。
+  // 避免歡迎畫面音樂或先前 Transport 狀態造成 musicLoop 沒有重新啟動。
+  try { musicLoop.stop(); } catch (e) {}
+  try {
+    if (Tone.Transport.state === "started") Tone.Transport.stop();
+    Tone.Transport.position = 0;
+  } catch (e) {}
+
+  musicLoop.start(0);
+  Tone.Transport.start();
 }
 function stopMusic() {
   if (musicLoop) musicLoop.stop();
@@ -2827,6 +2834,18 @@ function renderExport() {
   document.getElementById("exportBox").textContent = JSON.stringify(birds, null, 2);
 }
 
+// ---------- 語音導引（僅新增提示，不改原操作流程） ----------
+function speakGuide(text) {
+  try {
+    if (!("speechSynthesis" in window) || !text) return;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "zh-TW";
+    utter.rate = 1;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utter);
+  } catch (e) { /* 語音不可用時不影響原功能 */ }
+}
+
 // ---------- 主畫面模式切換(遊戲解說 / 正式開始) ----------
 let currentPlayerId = null;
 
@@ -2912,6 +2931,7 @@ document.querySelectorAll(".mode-btn").forEach(btn => {
     const mode = btn.dataset.mode;
     flashModeButton(btn);
     playModeSelectSound(mode);
+    speakGuide(mode === "challenge" ? "請選擇模式" : "請選擇一隻鳥");
     document.getElementById("birdGrid").classList.remove("tiffany-pulse");
     if (mode === "challenge") {
       if (FIREBASE_ENABLED) {
@@ -3020,9 +3040,24 @@ document.getElementById("playerPinInput").addEventListener("keydown", (e) => {
 });
 
 // ---------- 挑戰選單:三種模式 ----------
-document.getElementById("menuFullChallengeBtn").onclick = () => activateMode("challenge");
-document.getElementById("menuQuizChallengeBtn").onclick = () => showRandomQuizSetup();
-document.getElementById("menuGalleryBtn").onclick = () => showGallery();
+function speakChallengeCardSubtitle(buttonId) {
+  const btn = document.getElementById(buttonId);
+  const subtitle = btn ? btn.querySelector(".challenge-card-desc") : null;
+  if (subtitle) speakGuide(subtitle.textContent.trim());
+}
+
+document.getElementById("menuFullChallengeBtn").onclick = () => {
+  speakChallengeCardSubtitle("menuFullChallengeBtn");
+  activateMode("challenge");
+};
+document.getElementById("menuQuizChallengeBtn").onclick = () => {
+  speakChallengeCardSubtitle("menuQuizChallengeBtn");
+  showRandomQuizSetup();
+};
+document.getElementById("menuGalleryBtn").onclick = () => {
+  speakChallengeCardSubtitle("menuGalleryBtn");
+  showGallery();
+};
 document.getElementById("challengeMenuBackBtn").onclick = () => backToHome();
 
 // ---------- 題數挑戰賽 ----------
