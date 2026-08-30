@@ -3171,9 +3171,11 @@ document.getElementById("leaderboardCloseBtn").onclick = () => {
 // ---------- 設置密碼驗證 ----------
 const SETTINGS_PASSWORD = "LanYH&Birds";
 const SETTINGS_REMEMBER_KEY = "birdguide_settings_unlocked_v14_restored_20260830_1318";
+let settingsRemembered = false;
 let settingsUnlocked = false;
 try {
-  settingsUnlocked = localStorage.getItem(SETTINGS_REMEMBER_KEY) === "1";
+  settingsRemembered = localStorage.getItem(SETTINGS_REMEMBER_KEY) === "1";
+  settingsUnlocked = settingsRemembered;
 } catch (e) { /* localStorage 不可用時忽略 */ }
 
 function speakGreeting(text) {
@@ -3211,6 +3213,8 @@ function exitSettings() {
   document.getElementById("modeSelect").style.display = "flex";
   document.getElementById("settingsBtn").style.display = "block";
   document.getElementById("groupBtn").style.display = "block";
+  // 未選擇保持登入時，離開設置就重新上鎖；下次必須再次輸入密碼。
+  if (!settingsRemembered) settingsUnlocked = false;
 }
 
 function enterGroups() {
@@ -3257,9 +3261,14 @@ function submitSettingsPassword() {
     document.getElementById("passwordModalOverlay").style.display = "none";
     enterSettings();
     const remember = confirm("要保持登入嗎?選「確定」下次進設置就不用再輸入密碼(只在這台裝置有效)。");
-    if (remember) {
-      try { localStorage.setItem(SETTINGS_REMEMBER_KEY, "1"); } catch (e) { /* 忽略 */ }
-    }
+    settingsRemembered = remember;
+    try {
+      if (remember) {
+        localStorage.setItem(SETTINGS_REMEMBER_KEY, "1");
+      } else {
+        localStorage.removeItem(SETTINGS_REMEMBER_KEY);
+      }
+    } catch (e) { /* localStorage 不可用時忽略 */ }
   } else {
     document.getElementById("passwordError").style.display = "block";
   }
