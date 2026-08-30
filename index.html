@@ -1886,7 +1886,7 @@ function startCaptureGame(bird) {
       lastFrameTime = null;
       birdVanished = false;
       nextJitterAt = 0;
-      nextVanishAt = performance.now() + 1500 + Math.random() * 1500;
+      nextVanishAt = performance.now() + 1000 + Math.random() * 1500;
 
       reticlePos = { x: boxW / 2 - 42, y: boxH / 2 - 42 };
       const reticleEl = document.getElementById("reticle");
@@ -2051,7 +2051,7 @@ function renderQuiz() {
   const whoAmI = document.getElementById("whoAmIMeme");
   if (whoAmI) {
     const memeProgress = Math.min(correctSoFar / Math.max(bird.requiredCorrect, 1), 1);
-    const showMeme = GAME_MODE === "challenge" && currentAnswered[bird.id + "_captured"] !== true;
+    const showMeme = (GAME_MODE === "challenge" || GAME_MODE === "explain") && currentAnswered[bird.id + "_captured"] !== true;
     const nameEl = whoAmI.querySelector(".challenge-bird-name");
     if (nameEl) nameEl.textContent = bird.name;
     whoAmI.style.display = showMeme ? "block" : "none";
@@ -2194,9 +2194,19 @@ function renderQuiz() {
     hintBtn.className = "quiz-hint-btn";
     hintBtn.textContent = "提示";
     hintBtn.onclick = () => {
-      answered[cond.key] = true;
-      answered[cond.key + "_picked"] = acceptedValues[0];
-      renderQuiz();
+      hintBtn.disabled = true;
+      hintBtn.textContent = "提示答案";
+      Array.from(optGrid.children).forEach(optionBtn => {
+        optionBtn.classList.add("locked");
+        if (acceptedValues.includes(optionBtn.textContent)) {
+          optionBtn.classList.add("correct");
+        }
+      });
+      setTimeout(() => {
+        answered[cond.key] = true;
+        answered[cond.key + "_picked"] = acceptedValues[0];
+        renderQuiz();
+      }, 1500);
     };
     labelRow.appendChild(hintBtn);
   }
