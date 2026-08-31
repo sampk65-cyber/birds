@@ -1562,6 +1562,21 @@
       </select>
     </div>
 
+<div class="settings-location-card" id="settingsLocationCard">
+  <div class="settings-location-title">📍 鳥類定位紀錄</div>
+  <div class="settings-location-actions">
+    <button type="button" class="settings-location-btn" id="settingsLocationBtn">開啟定位並記錄位置</button>
+    <button type="button" class="settings-location-btn secondary" id="settingsLocationClearBtn">清除位置</button>
+  </div>
+  <div class="settings-location-status" id="settingsLocationStatus">尚未記錄位置</div>
+  <div class="settings-location-grid">
+    <label>緯度<input type="text" id="settingsLatitude" readonly></label>
+    <label>經度<input type="text" id="settingsLongitude" readonly></label>
+    <label>精度<input type="text" id="settingsAccuracy" readonly></label>
+    <label>定位時間<input type="text" id="settingsLocationTime" readonly></label>
+  </div>
+</div>
+
     <div class="field">
       <label id="photoFieldLabel">上傳照片(可選)</label>
       <input type="file" id="f_photo" accept="image/*">
@@ -1591,21 +1606,6 @@
       <div class="section-title">匯出資料(供接 Firestore 用)</div>
       <div class="hint">複製此 JSON,之後可直接匯入 Firestore 對應集合</div>
       
-<div class="settings-location-card" id="settingsLocationCard">
-  <div class="settings-location-title">📍 鳥類位置資料</div>
-  <div class="settings-location-actions">
-    <button type="button" class="settings-location-btn" id="settingsLocationBtn">開啟定位</button>
-    <button type="button" class="settings-location-btn secondary" id="settingsLocationClearBtn">清除位置</button>
-  </div>
-  <div class="settings-location-status" id="settingsLocationStatus">尚未記錄位置</div>
-  <div class="settings-location-grid">
-    <label>緯度<input type="text" id="settingsLatitude" readonly></label>
-    <label>經度<input type="text" id="settingsLongitude" readonly></label>
-    <label>精度<input type="text" id="settingsAccuracy" readonly></label>
-    <label>定位時間<input type="text" id="settingsLocationTime" readonly></label>
-  </div>
-</div>
-
 <div class="export-box" id="exportBox"></div>
     </div>
 
@@ -2801,6 +2801,8 @@ function resetAdminForm() {
   document.getElementById("f_level").value = "1";
   document.getElementById("f_season").value = "春";
   document.getElementById("f_photo").value = "";
+  settingsBirdLocation = null;
+  syncSettingsLocationFields(null);
   document.querySelectorAll(".chk-btn.selected").forEach(el => el.classList.remove("selected"));
   document.querySelectorAll(".custom-input").forEach(el => el.value = "");
 }
@@ -2838,6 +2840,9 @@ function loadBirdForEdit(birdId) {
   document.getElementById("f_photographer").value = bird.photographer || "";
   document.getElementById("f_story").value = bird.story || "";
   document.getElementById("f_photo").value = "";
+
+  settingsBirdLocation = bird.location ? JSON.parse(JSON.stringify(bird.location)) : null;
+  syncSettingsLocationFields(settingsBirdLocation);
 
   document.querySelectorAll(".chk-btn.selected").forEach(el => el.classList.remove("selected"));
   document.querySelectorAll(".custom-input").forEach(el => el.value = "");
@@ -2942,6 +2947,8 @@ document.getElementById("saveBirdBtn").onclick = async () => {
       bird.story = story;
       if (photoUrl) bird.photoUrl = photoUrl;
       if (photographer) bird.photographer = photographer; else delete bird.photographer;
+      if (settingsBirdLocation) bird.location = JSON.parse(JSON.stringify(settingsBirdLocation));
+      else delete bird.location;
       await saveBirdToFirestore(bird);
     }
   } else {
@@ -2957,8 +2964,7 @@ document.getElementById("saveBirdBtn").onclick = async () => {
     if (photoUrl) newBird.photoUrl = photoUrl;
     if (photographer) newBird.photographer = photographer;
     if (settingsBirdLocation) newBird.location = JSON.parse(JSON.stringify(settingsBirdLocation));
-  else delete newBird.location;
-  birds.push(newBird);
+    birds.push(newBird);
     await saveBirdToFirestore(newBird);
   }
 
