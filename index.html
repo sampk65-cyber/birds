@@ -1273,7 +1273,7 @@
 <div class="top-right-nav">
   <button class="settings-btn" id="settingsBtn">設置</button>
   <button class="group-btn" id="groupBtn">族群</button>
-<button class="settings-btn" id="mainSoundToggle" style="background:#2f8f57;border-color:rgba(120,220,160,.88);color:#fff;">🎵 音樂開</button>
+<button class="settings-btn" id="mainSoundToggle" style="background:#2f8f57;border-color:rgba(120,220,160,.88);color:#fff;padding-left:12px;padding-right:12px;">音樂開</button>
 </div>
 <div class="wrap">
 
@@ -2079,32 +2079,6 @@ function applyGeoPosition(position) {
   const time = formatGeoTime(currentGeoLocation.timestamp);
   setLocationStatus(`定位成功 ✓  ${lat}, ${lng}｜精度約 ${acc} 公尺${time ? "｜" + time : ""}`, "ok");
 }
-
-
-document.getElementById("birdLocationBtn").addEventListener("click", () => {
-  if (!window.isSecureContext) {
-    setLocationStatus("定位需要 HTTPS 安全部署環境。", "err");
-    return;
-  }
-  if (!("geolocation" in navigator)) {
-    setLocationStatus("此瀏覽器不支援定位功能。", "err");
-    return;
-  }
-  setLocationStatus("正在取得目前位置…");
-  navigator.geolocation.getCurrentPosition(
-    applyGeoPosition,
-    (err) => {
-      let msg = "定位失敗";
-      if (err && err.code === 1) msg = "定位權限被拒絕，請允許網站使用位置。";
-      else if (err && err.code === 2) msg = "目前無法取得位置，請確認 GPS／定位服務已開啟。";
-      else if (err && err.code === 3) msg = "定位逾時，請再試一次。";
-      setLocationStatus(msg, "err");
-    },
-    { enableHighAccuracy:true, timeout:12000, maximumAge:15000 }
-  );
-});
-
-
 function openQuiz(birdId) {
   document.getElementById("birdGrid").classList.remove("tiffany-pulse");
   if (GAME_MODE === "challenge") setChallengeInteractionLock(true);
@@ -2200,7 +2174,7 @@ let backgroundMusicEnabled = localStorage.getItem("birdGuideBackgroundMusicEnabl
 function syncMainSoundToggle() {
   const btn = document.getElementById("mainSoundToggle");
   if (!btn) return;
-  btn.textContent = backgroundMusicEnabled ? "🎵 音樂開" : "🔇 音樂關";
+  btn.textContent = backgroundMusicEnabled ? "音樂開" : "音樂關";
   btn.style.background = backgroundMusicEnabled ? "#2f8f57" : "#7b7f83";
   btn.style.color = "#fff";
 }
@@ -2212,16 +2186,23 @@ function stopAllBackgroundMusic() {
   });
 }
 document.getElementById("mainSoundToggle")?.addEventListener("click", async () => {
-  primeEmbeddedMusic();
   backgroundMusicEnabled = !backgroundMusicEnabled;
   localStorage.setItem("birdGuideBackgroundMusicEnabled", backgroundMusicEnabled ? "1" : "0");
   syncMainSoundToggle();
+
   if (!backgroundMusicEnabled) {
     stopAllBackgroundMusic();
     return;
   }
-  if (document.body.classList.contains("challenge-running")) await startMusic();
-  else await playHomeWelcomeMusic();
+
+  // This click itself is a real user gesture, so play embedded HTML audio directly.
+  embeddedMusicUnlocked = true;
+  stopAllBackgroundMusic();
+  if (document.body.classList.contains("challenge-running")) {
+    await startMusic();
+  } else {
+    await playHomeWelcomeMusic();
+  }
 });
 syncMainSoundToggle();
 
