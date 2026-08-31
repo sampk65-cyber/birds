@@ -358,14 +358,20 @@
   .thumb-photo-wrap { position: relative; width: 100%; height: 100%; }
   .photo-credit {
     position: absolute;
-    left: 0; right: 0; bottom: 0;
-    background: rgba(20, 20, 15, 0.6);
-    color: #fff;
+    left: 8px;
+    bottom: 7px;
+    z-index: 8;
+    color: rgba(255,255,255,0.98);
     font-family: var(--font-sans);
     font-size: 9px;
     font-weight: 600;
-    padding: 2px 6px;
-    text-align: center;
+    letter-spacing: .2px;
+    padding: 0;
+    text-align: left;
+    background: transparent;
+    text-shadow: 0 1px 4px rgba(0,0,0,.92), 0 0 2px rgba(0,0,0,.75);
+    pointer-events: none;
+    white-space: nowrap;
   }
   .mystery-placeholder {
     position: relative;
@@ -1273,7 +1279,7 @@
 <div class="top-right-nav">
   <button class="settings-btn" id="settingsBtn">設置</button>
   <button class="group-btn" id="groupBtn">族群</button>
-<button class="settings-btn" id="mainSoundToggle" style="background:#2f8f57;border-color:rgba(120,220,160,.88);color:#fff;padding-left:12px;padding-right:12px;">音樂開</button>
+<button class="settings-btn" id="mainSoundToggle" style="background:#2f8f57;border-color:rgba(120,220,160,.88);color:#fff;padding-left:12px;padding-right:12px;">聲音開</button>
 </div>
 <div class="wrap">
 
@@ -1285,7 +1291,7 @@
     <div class="home-hero-content">
       <header class="app-header">
         <h1 id="heroTitle">小小鳥類解說員</h1>
-        <p id="heroSubtitle">Field Guide Vresion3. 0</p>
+        <p id="heroSubtitle">Field Guide Vresion3. 3</p>
       </header>
 
       <div class="mode-select" id="modeSelect">
@@ -1311,6 +1317,10 @@
     <div class="modal-card">
       <div class="modal-title">設置密碼</div>
       <input type="password" id="settingsPasswordInput" placeholder="輸入密碼">
+      <label style="display:flex;align-items:center;gap:8px;margin:10px 0 2px;font-size:14px;font-weight:700;color:#355;">
+        <input type="checkbox" id="rememberSettingsPassword" checked style="width:18px;height:18px;">
+        記住設置密碼
+      </label>
       <div class="field-error" id="passwordError" style="display:none;">密碼錯誤,再試一次</div>
       <div class="modal-btn-row">
         <button class="modal-btn-cancel" id="passwordCancelBtn">取消</button>
@@ -1326,6 +1336,10 @@
       <div class="field-error" id="loginError" style="display:none;">請輸入 ID</div>
       <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="playerPinInput" placeholder="設定/輸入 4 位數通行碼" style="margin-top:10px;">
       <div class="hint" style="margin:4px 0 0;">第一次使用這個 ID 會自動設定成你的通行碼,之後要輸入一樣的碼才能繼續,別人才不能用同名字看到你的進度</div>
+      <label style="display:flex;align-items:center;gap:8px;margin:10px 0 2px;font-size:14px;font-weight:700;color:#355;">
+        <input type="checkbox" id="rememberChallengeLogin" checked style="width:18px;height:18px;">
+        記住登入，下次正式開始直接進入
+      </label>
       <div class="field-error" id="loginPinError" style="display:none;">通行碼錯誤,如果這不是你的 ID,請換一個名字</div>
       <div class="modal-btn-row">
         <button class="modal-btn-cancel" id="loginCancelBtn">取消</button>
@@ -1374,6 +1388,7 @@
           <div class="scene-bg" id="revealScene"></div>
           <div class="mystery-placeholder" id="revealMysteryPlaceholder"></div>
           <img class="reveal-photo" id="revealPhoto" alt="">
+          <div class="photo-credit" id="revealPhotoCredit" style="display:none;"></div>
           <div class="veil" id="veil"></div>
           <div class="who-am-i-meme" id="whoAmIMeme" style="display:none;"><span class="challenge-bird-name"></span><span class="challenge-bird-question">長怎樣</span></div>
           <div class="viewfinder-corners">
@@ -2038,7 +2053,7 @@ function renderBirdGrid() {
     const done = (currentAnswered[b.id + "_done"] === true);
     const tile = document.createElement("div");
     tile.className = "bird-tile" + (done ? " done" : "");
-    const photoCredit = b.photographer ? `<div class="photo-credit">攝影:${b.photographer}</div>` : "";
+    const photoCredit = b.photographer ? `<div class="photo-credit">${b.photographer}</div>` : "";
     const thumbInner = (done && b.photoUrl)
       ? `<div class="thumb-photo-wrap"><img src="${b.photoUrl}" alt="${b.name}" style="width:100%;height:100%;object-fit:cover;">${photoCredit}</div>`
       : `<div class="mystery-placeholder">
@@ -2207,13 +2222,20 @@ document.addEventListener("touchstart", primeEmbeddedMusic, { capture: true, onc
 
 
 
-let backgroundMusicEnabled = localStorage.getItem("birdGuideBackgroundMusicEnabled") !== "0";
+let masterSoundEnabled = localStorage.getItem("birdGuideMasterSoundEnabled");
+if (masterSoundEnabled === null) {
+  masterSoundEnabled = localStorage.getItem("birdGuideBackgroundMusicEnabled") !== "0";
+} else {
+  masterSoundEnabled = masterSoundEnabled !== "0";
+}
+// 相容舊程式裡既有的背景音樂判斷
+let backgroundMusicEnabled = masterSoundEnabled;
 
 function syncMainSoundToggle() {
   const btn = document.getElementById("mainSoundToggle");
   if (!btn) return;
-  btn.textContent = backgroundMusicEnabled ? "音樂開" : "音樂關";
-  btn.style.background = backgroundMusicEnabled ? "#2f8f57" : "#7b7f83";
+  btn.textContent = masterSoundEnabled ? "聲音開" : "聲音關";
+  btn.style.background = masterSoundEnabled ? "#2f8f57" : "#7b7f83";
   btn.style.color = "#fff";
 }
 function stopAllBackgroundMusic() {
@@ -2223,17 +2245,24 @@ function stopAllBackgroundMusic() {
     try { audio.pause(); } catch (e) {}
   });
 }
+function silenceAllAudio() {
+  stopAllBackgroundMusic();
+  try {
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+  } catch (e) {}
+}
 document.getElementById("mainSoundToggle")?.addEventListener("click", async () => {
-  backgroundMusicEnabled = !backgroundMusicEnabled;
-  localStorage.setItem("birdGuideBackgroundMusicEnabled", backgroundMusicEnabled ? "1" : "0");
+  masterSoundEnabled = !masterSoundEnabled;
+  backgroundMusicEnabled = masterSoundEnabled;
+  localStorage.setItem("birdGuideMasterSoundEnabled", masterSoundEnabled ? "1" : "0");
+  localStorage.setItem("birdGuideBackgroundMusicEnabled", masterSoundEnabled ? "1" : "0");
   syncMainSoundToggle();
 
-  if (!backgroundMusicEnabled) {
-    stopAllBackgroundMusic();
+  if (!masterSoundEnabled) {
+    silenceAllAudio();
     return;
   }
 
-  // This click itself is a real user gesture, so play embedded HTML audio directly.
   embeddedMusicUnlocked = true;
   stopAllBackgroundMusic();
   if (document.body.classList.contains("challenge-running")) {
@@ -2245,10 +2274,12 @@ document.getElementById("mainSoundToggle")?.addEventListener("click", async () =
 syncMainSoundToggle();
 
 function playShutterClick() {
+  if (!masterSoundEnabled) return;
   ensureAudio();
   clickSynth.triggerAttackRelease("C2", "16n");
 }
 function playModeSelectSound(mode) {
+  if (!masterSoundEnabled) return;
   ensureAudio();
   const now = Tone.now();
   clickSynth.triggerAttackRelease(mode === "explain" ? "G2" : "C2", "32n", now);
@@ -2261,12 +2292,14 @@ function flashModeButton(btn) {
   window.setTimeout(() => btn.classList.remove("mode-feedback"), 360);
 }
 function playHitSound() {
+  if (!masterSoundEnabled) return;
   ensureAudio();
   const now = Tone.now();
   chimeSynth.triggerAttackRelease("E6", "8n", now, 0.38);
   chimeSynth.triggerAttackRelease("C6", "8n", now + 0.16, 0.38);
 }
 function playMissSound() {
+  if (!masterSoundEnabled) return;
   ensureAudio();
   const now = Tone.now();
   chimeSynth.triggerAttackRelease("A3", "16n", now, 0.38);
@@ -2569,13 +2602,19 @@ function renderQuiz() {
   const photoEl = document.getElementById("revealPhoto");
   if (captured) {
     veil.style.opacity = "0";
-    caption.textContent = bird.name + " ・ 已收藏" + (bird.photographer ? " ・ 攝影:" + bird.photographer : "");
+    caption.textContent = bird.name + " ・ 已收藏";
     caption.classList.add("show");
+    const revealCredit = document.getElementById("revealPhotoCredit");
     if (bird.photoUrl) {
       photoEl.src = bird.photoUrl;
       photoEl.classList.add("show");
+      if (revealCredit) {
+        revealCredit.textContent = bird.photographer || "";
+        revealCredit.style.display = bird.photographer ? "block" : "none";
+      }
     } else {
       photoEl.classList.remove("show");
+      if (revealCredit) revealCredit.style.display = "none";
     }
   } else {
     const progress = Math.min(correctSoFar / bird.requiredCorrect, 1) * 0.85;
@@ -2583,6 +2622,8 @@ function renderQuiz() {
     veil.style.backdropFilter = "blur(" + (14 * (1 - progress)) + "px)";
     caption.classList.remove("show");
     photoEl.classList.remove("show");
+    const revealCredit = document.getElementById("revealPhotoCredit");
+    if (revealCredit) revealCredit.style.display = "none";
   }
 
   const qArea = document.getElementById("qArea");
@@ -3230,6 +3271,7 @@ function renderExport() {
 // ---------- 語音導引（僅新增提示，不改原操作流程） ----------
 function speakGuide(text) {
   try {
+    if (!masterSoundEnabled) return;
     if (!("speechSynthesis" in window) || !text) return;
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = "zh-TW";
@@ -3338,20 +3380,39 @@ function showChallengeMenu() {
 
 
 const CHALLENGE_SESSION_KEY = "birdGuideChallengeSessionV3";
+const CHALLENGE_REMEMBER_KEY = "birdGuideRememberChallengeLogin";
 
+function isChallengeLoginRemembered() {
+  return localStorage.getItem(CHALLENGE_REMEMBER_KEY) !== "0";
+}
 function saveChallengeSession(id, pin) {
   try {
+    if (!isChallengeLoginRemembered()) {
+      localStorage.removeItem(CHALLENGE_SESSION_KEY);
+      return;
+    }
     if (id && pin) localStorage.setItem(CHALLENGE_SESSION_KEY, JSON.stringify({ id, pin, savedAt:Date.now() }));
   } catch (e) {}
 }
+function clearChallengeSession() {
+  try { localStorage.removeItem(CHALLENGE_SESSION_KEY); } catch (e) {}
+}
 function loadChallengeSession() {
   try {
-    if (!navigator.onLine) return null;
+    if (!navigator.onLine || !isChallengeLoginRemembered()) return null;
     const raw = localStorage.getItem(CHALLENGE_SESSION_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw);
     return (data && data.id && data.pin) ? data : null;
   } catch (e) { return null; }
+}
+const rememberChallengeLoginEl = document.getElementById("rememberChallengeLogin");
+if (rememberChallengeLoginEl) {
+  rememberChallengeLoginEl.checked = isChallengeLoginRemembered();
+  rememberChallengeLoginEl.addEventListener("change", () => {
+    localStorage.setItem(CHALLENGE_REMEMBER_KEY, rememberChallengeLoginEl.checked ? "1" : "0");
+    if (!rememberChallengeLoginEl.checked) clearChallengeSession();
+  });
 }
 
 document.querySelectorAll(".mode-btn").forEach(btn => {
@@ -3365,24 +3426,26 @@ document.querySelectorAll(".mode-btn").forEach(btn => {
     document.getElementById("birdGrid").classList.remove("tiffany-pulse");
     if (mode === "challenge") {
       const savedSession = loadChallengeSession();
-      if (savedSession) {
-        const idInput = document.getElementById("playerIdInput");
-        const pinInput = document.getElementById("playerPinInput");
-        if (idInput) idInput.value = savedSession.id;
-        if (pinInput) pinInput.value = savedSession.pin;
-        window.__autoChallengeLogin = true;
-      }
       if (FIREBASE_ENABLED) {
-        document.getElementById("playerIdInput").value = currentPlayerId || "";
-        document.getElementById("playerPinInput").value = "";
         document.getElementById("loginError").style.display = "none";
         document.getElementById("loginPinError").style.display = "none";
-        document.getElementById("loginModalOverlay").style.display = "flex";
-      if (window.__autoChallengeLogin) {
-        window.__autoChallengeLogin = false;
-        setTimeout(() => document.getElementById("loginConfirmBtn")?.click(), 0);
-      }
-        document.getElementById("playerIdInput").focus();
+
+        if (savedSession) {
+          document.getElementById("playerIdInput").value = savedSession.id;
+          document.getElementById("playerPinInput").value = savedSession.pin;
+          const rememberEl = document.getElementById("rememberChallengeLogin");
+          if (rememberEl) rememberEl.checked = true;
+          // 已登入過且目前在線：直接驗證並進入，不再重複顯示登入視窗
+          document.getElementById("loginModalOverlay").style.display = "none";
+          setTimeout(() => document.getElementById("loginConfirmBtn")?.click(), 0);
+        } else {
+          document.getElementById("playerIdInput").value = currentPlayerId || "";
+          document.getElementById("playerPinInput").value = "";
+          const rememberEl = document.getElementById("rememberChallengeLogin");
+          if (rememberEl) rememberEl.checked = isChallengeLoginRemembered();
+          document.getElementById("loginModalOverlay").style.display = "flex";
+          document.getElementById("playerIdInput").focus();
+        }
       } else {
         showChallengeMenu();
       }
@@ -3429,7 +3492,6 @@ document.getElementById("loginConfirmBtn").onclick = async () => {
         document.getElementById("loginPinError").style.display = "block";
       } else {
         currentPlayerId = id;
-      saveChallengeSession(currentPlayerId, document.getElementById("playerPinInput")?.value || "");
         currentAnswered = {};
         totalScore = data.score || 0;
         if (data.progress && typeof data.progress === "object") {
@@ -3470,6 +3532,12 @@ document.getElementById("loginConfirmBtn").onclick = async () => {
   confirmBtn.textContent = "開始挑戰";
 
   if (loginOk) {
+    const rememberEl = document.getElementById("rememberChallengeLogin");
+    const shouldRemember = rememberEl ? rememberEl.checked : true;
+    localStorage.setItem(CHALLENGE_REMEMBER_KEY, shouldRemember ? "1" : "0");
+    if (shouldRemember) saveChallengeSession(id, pin);
+    else clearChallengeSession();
+
     document.getElementById("loginModalOverlay").style.display = "none";
     speakGuide("請選取模式");
     showChallengeMenu();
@@ -3695,8 +3763,9 @@ function renderGalleryGrid() {
   birds.forEach((b, i) => {
     const tile = document.createElement("div");
     tile.className = "bird-tile";
+    const galleryCredit = b.photographer ? `<div class="photo-credit">${b.photographer}</div>` : "";
     const thumbInner = b.photoUrl
-      ? `<img src="${b.photoUrl}" alt="${b.name}" style="width:100%;height:100%;object-fit:cover;">`
+      ? `<div class="thumb-photo-wrap"><img src="${b.photoUrl}" alt="${b.name}" style="width:100%;height:100%;object-fit:cover;">${galleryCredit}</div>`
       : `<div class="mystery-placeholder">${buildMysteryBirdImg(mysteryImgForLevel(b.level))}</div>`;
     tile.innerHTML = `
       <div class="index">No. ${String(i + 1).padStart(3, "0")}</div>
@@ -3720,7 +3789,8 @@ function showGalleryDetail(birdId) {
   const photoBox = document.getElementById("galleryPhotoBox");
   photoBox.innerHTML = "";
   if (bird.photoUrl) {
-    photoBox.innerHTML = `<img src="${bird.photoUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+    const credit = bird.photographer ? `<div class="photo-credit">${bird.photographer}</div>` : "";
+    photoBox.innerHTML = `<div class="thumb-photo-wrap"><img src="${bird.photoUrl}" style="width:100%;height:100%;object-fit:cover;">${credit}</div>`;
   } else {
     photoBox.innerHTML = `<div class="mystery-placeholder">${buildMysteryBirdImg(mysteryImgForLevel(bird.level))}</div>`;
   }
@@ -3799,19 +3869,28 @@ document.getElementById("leaderboardCloseBtn").onclick = () => {
 
 // ---------- 設置密碼驗證 ----------
 const SETTINGS_PASSWORD = "LanYH&Birds";
+const SETTINGS_REMEMBER_KEY = "birdGuideRememberSettingsPassword";
+const SETTINGS_VERIFIED_KEY = "birdGuideSettingsPasswordVerified";
 let settingsUnlocked = false;
 
-// 設置入口採強制驗證：不使用永久登入，避免沒有登出按鈕時直接進入設置。
-try {
-  Object.keys(localStorage).forEach(key => {
-    if (key.indexOf("birdguide_settings_unlocked") === 0) {
-      localStorage.removeItem(key);
-    }
+function isSettingsPasswordRemembered() {
+  return localStorage.getItem(SETTINGS_REMEMBER_KEY) !== "0";
+}
+function hasRememberedSettingsAccess() {
+  return isSettingsPasswordRemembered() && localStorage.getItem(SETTINGS_VERIFIED_KEY) === "1";
+}
+const rememberSettingsPasswordEl = document.getElementById("rememberSettingsPassword");
+if (rememberSettingsPasswordEl) {
+  rememberSettingsPasswordEl.checked = isSettingsPasswordRemembered();
+  rememberSettingsPasswordEl.addEventListener("change", () => {
+    localStorage.setItem(SETTINGS_REMEMBER_KEY, rememberSettingsPasswordEl.checked ? "1" : "0");
+    if (!rememberSettingsPasswordEl.checked) localStorage.removeItem(SETTINGS_VERIFIED_KEY);
   });
-} catch (e) { /* localStorage 不可用時忽略 */ }
+}
 
 function speakGreeting(text) {
   try {
+    if (!masterSoundEnabled) return;
     if (!("speechSynthesis" in window)) return;
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = "zh-TW";
@@ -3846,8 +3925,8 @@ function exitSettings() {
   document.getElementById("modeSelect").style.display = "flex";
   document.getElementById("settingsBtn").style.display = "block";
   document.getElementById("groupBtn").style.display = "block";
-  // 離開設置後立即重新上鎖；下次從主頁進入必須再次輸入密碼。
-  settingsUnlocked = false;
+  // 若已選擇記住設置密碼，下次可直接進入；否則離開後重新上鎖。
+  settingsUnlocked = hasRememberedSettingsAccess();
   if (window.__birdGuideGameLayerEntered !== true) {
     document.getElementById("bird-list-panel").style.display = "none";
     showHomeWelcome(true);
@@ -3882,8 +3961,15 @@ document.getElementById("groupBtn").onclick = () => enterGroups();
 document.getElementById("groupsBackBtn").onclick = () => exitGroups();
 
 document.getElementById("settingsBtn").onclick = () => {
+  if (hasRememberedSettingsAccess()) {
+    settingsUnlocked = true;
+    enterSettings();
+    return;
+  }
   settingsUnlocked = false;
   document.getElementById("settingsPasswordInput").value = "";
+  const rememberEl = document.getElementById("rememberSettingsPassword");
+  if (rememberEl) rememberEl.checked = isSettingsPasswordRemembered();
   document.getElementById("passwordError").style.display = "none";
   document.getElementById("passwordModalOverlay").style.display = "flex";
   document.getElementById("settingsPasswordInput").focus();
@@ -3897,6 +3983,11 @@ function submitSettingsPassword() {
   const val = document.getElementById("settingsPasswordInput").value;
   if (val === SETTINGS_PASSWORD) {
     settingsUnlocked = true;
+    const rememberEl = document.getElementById("rememberSettingsPassword");
+    const shouldRemember = rememberEl ? rememberEl.checked : true;
+    localStorage.setItem(SETTINGS_REMEMBER_KEY, shouldRemember ? "1" : "0");
+    if (shouldRemember) localStorage.setItem(SETTINGS_VERIFIED_KEY, "1");
+    else localStorage.removeItem(SETTINGS_VERIFIED_KEY);
     document.getElementById("passwordModalOverlay").style.display = "none";
     enterSettings();
   } else {
