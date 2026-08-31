@@ -1570,6 +1570,7 @@
   </div>
   <div class="settings-location-status" id="settingsLocationStatus">尚未記錄位置</div>
   <div class="settings-location-grid">
+    <label>地名<input type="text" id="settingsLocationName" placeholder="自動取得，也可自行輸入"></label>
     <label>緯度<input type="text" id="settingsLatitude" readonly></label>
     <label>經度<input type="text" id="settingsLongitude" readonly></label>
     <label>精度<input type="text" id="settingsAccuracy" readonly></label>
@@ -1914,11 +1915,13 @@ function setSettingsLocationStatus(text, type="") {
   el.textContent = text;
 }
 function syncSettingsLocationFields(loc) {
+  const name = document.getElementById("settingsLocationName");
   const lat = document.getElementById("settingsLatitude");
   const lng = document.getElementById("settingsLongitude");
   const acc = document.getElementById("settingsAccuracy");
   const time = document.getElementById("settingsLocationTime");
   if (!loc) {
+    if (name) name.value = "";
     if (lat) lat.value = "";
     if (lng) lng.value = "";
     if (acc) acc.value = "";
@@ -1926,12 +1929,31 @@ function syncSettingsLocationFields(loc) {
     setSettingsLocationStatus("尚未記錄位置");
     return;
   }
+  if (name) name.value = loc.name || "";
   if (lat) lat.value = Number(loc.latitude).toFixed(6);
   if (lng) lng.value = Number(loc.longitude).toFixed(6);
   if (acc) acc.value = Math.round(loc.accuracy || 0) + " 公尺";
   if (time) time.value = formatGeoTime(loc.timestamp || Date.now());
   setSettingsLocationStatus("位置已記錄 ✓", "ok");
 }
+
+async function reverseGeocodeLocation(lat, lng) {
+  try {
+    const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lng)}&localityLanguage=zh`;
+    const res = await fetch(url, { cache:"no-store" });
+    if (!res.ok) throw new Error("reverse geocode failed");
+    const data = await res.json();
+    const parts = [
+      data.locality || data.city || data.principalSubdivision,
+      data.localityInfo?.administrative?.find(x => x.order === 6)?.name
+    ].filter(Boolean);
+    return [...new Set(parts)].join(" ") || data.principalSubdivision || "";
+  } catch (e) {
+    console.warn("地名取得失敗", e);
+    return "";
+  }
+}
+
 document.getElementById("settingsLocationBtn")?.addEventListener("click", () => {
   if (!("geolocation" in navigator)) {
     setSettingsLocationStatus("此瀏覽器不支援定位。", "err");
@@ -1939,14 +1961,25 @@ document.getElementById("settingsLocationBtn")?.addEventListener("click", () => 
   }
   setSettingsLocationStatus("正在取得位置…");
   navigator.geolocation.getCurrentPosition(
-    pos => {
+    async pos => {
+      const typedName = (document.getElementById("settingsLocationName")?.value || "").trim();
       settingsBirdLocation = {
+        name:typedName,
         latitude:pos.coords.latitude,
         longitude:pos.coords.longitude,
         accuracy:pos.coords.accuracy,
         timestamp:pos.timestamp || Date.now()
       };
       syncSettingsLocationFields(settingsBirdLocation);
+      if (!settingsBirdLocation.name) {
+        setSettingsLocationStatus("定位成功，正在取得地名…", "ok");
+        const placeName = await reverseGeocodeLocation(settingsBirdLocation.latitude, settingsBirdLocation.longitude);
+        if (settingsBirdLocation) {
+          settingsBirdLocation.name = placeName || "";
+          syncSettingsLocationFields(settingsBirdLocation);
+          setSettingsLocationStatus(placeName ? "位置與地名已記錄 ✓" : "位置已記錄 ✓（地名未取得）", "ok");
+        }
+      }
     },
     err => {
       let msg = "定位失敗";
@@ -1961,6 +1994,11 @@ document.getElementById("settingsLocationBtn")?.addEventListener("click", () => 
 document.getElementById("settingsLocationClearBtn")?.addEventListener("click", () => {
   settingsBirdLocation = null;
   syncSettingsLocationFields(null);
+});
+
+document.getElementById("settingsLocationName")?.addEventListener("input", (e) => {
+  if (!settingsBirdLocation) return;
+  settingsBirdLocation.name = String(e.target.value || "").trim();
 });
 
 function normalizeBirdSearchText(value) {
@@ -2949,6 +2987,7 @@ document.getElementById("saveBirdBtn").onclick = async () => {
       if (photographer) bird.photographer = photographer; else delete bird.photographer;
       if (settingsBirdLocation) bird.location = JSON.parse(JSON.stringify(settingsBirdLocation));
       else delete bird.location;
+      bird.uploadedAt = Date.now();
       await saveBirdToFirestore(bird);
     }
   } else {
@@ -2964,6 +3003,7 @@ document.getElementById("saveBirdBtn").onclick = async () => {
     if (photoUrl) newBird.photoUrl = photoUrl;
     if (photographer) newBird.photographer = photographer;
     if (settingsBirdLocation) newBird.location = JSON.parse(JSON.stringify(settingsBirdLocation));
+    newBird.uploadedAt = Date.now();
     birds.push(newBird);
     await saveBirdToFirestore(newBird);
   }
@@ -3694,6 +3734,32 @@ function showGalleryDetail(birdId) {
     row.innerHTML = `<span class="gc-label">${cond.label}</span><span class="gc-value">${values || "-"}</span>`;
     listEl.appendChild(row);
   });
+
+  const locationRow = document.createElement("div");
+  locationRow.className = "gallery-condition-row";
+  const locationText = bird.location
+    ? ((bird.location.name && String(bird.location.name).trim())
+        ? String(bird.location.name).trim()
+        : `${Number(bird.location.latitude).toFixed(5)}, ${Number(bird.location.longitude).toFixed(5)}`)
+    : "未記錄";
+  locationRow.innerHTML = `<span class="gc-label">定位點</span><span class="gc-value" id="galleryLocationValue">${locationText}</span>`;
+  listEl.appendChild(locationRow);
+
+  const uploadRow = document.createElement("div");
+  uploadRow.className = "gallery-condition-row";
+  const uploadTime = bird.uploadedAt || bird.location?.timestamp || null;
+  uploadRow.innerHTML = `<span class="gc-label">上傳時間</span><span class="gc-value">${uploadTime ? formatGeoTime(uploadTime) : "未記錄"}</span>`;
+  listEl.appendChild(uploadRow);
+
+  // 舊資料若只有座標沒有地名，查看時嘗試補抓地名；失敗則保留座標。
+  if (bird.location && !bird.location.name && bird.location.latitude != null && bird.location.longitude != null) {
+    reverseGeocodeLocation(bird.location.latitude, bird.location.longitude).then(placeName => {
+      if (!placeName) return;
+      bird.location.name = placeName;
+      const el = document.getElementById("galleryLocationValue");
+      if (el && document.getElementById("galleryBirdName").textContent === bird.name) el.textContent = placeName;
+    });
+  }
 }
 
 document.getElementById("galleryBackBtn").onclick = () => showChallengeMenu();
