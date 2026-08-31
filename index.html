@@ -1434,6 +1434,13 @@
   <!-- ============ CHALLENGE MENU VIEW ============ -->
   <div class="view" id="view-challenge-menu">
     <div class="stamp">選擇挑戰模式</div>
+    <div id="challengeAccountBar" style="display:none;align-items:center;justify-content:space-between;gap:10px;margin:0 0 14px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.84);border:1px solid rgba(35,90,65,.15);">
+      <div style="min-width:0;">
+        <div style="font-size:12px;color:#6b746f;font-weight:700;">目前登入</div>
+        <div id="challengeAccountText" style="font-size:14px;color:#214f3b;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+      </div>
+      <button type="button" id="switchChallengeAccountBtn" style="border:0;border-radius:10px;padding:8px 10px;background:#edf3ef;color:#24563e;font-weight:800;font:inherit;white-space:nowrap;">切換帳號</button>
+    </div>
 <div class="challenge-menu-grid">
       <button class="challenge-card" id="menuGalleryBtn">
         <div class="challenge-card-title">1. 圖鑑模式</div>
@@ -3376,6 +3383,7 @@ function showChallengeMenu() {
   });
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
   document.getElementById("view-challenge-menu").classList.add("active");
+  updateChallengeAccountBar();
 }
 
 
@@ -3406,6 +3414,35 @@ function loadChallengeSession() {
     return (data && data.id && data.pin) ? data : null;
   } catch (e) { return null; }
 }
+
+function updateChallengeAccountBar() {
+  const bar = document.getElementById("challengeAccountBar");
+  const text = document.getElementById("challengeAccountText");
+  if (!bar || !text) return;
+  const session = loadChallengeSession();
+  if (!session) {
+    bar.style.display = "none";
+    text.textContent = "";
+    return;
+  }
+  text.textContent = `${session.id}  ·  密碼 ••••••`;
+  bar.style.display = "flex";
+}
+
+document.getElementById("switchChallengeAccountBtn")?.addEventListener("click", () => {
+  clearChallengeSession();
+  currentPlayerId = "";
+  const idInput = document.getElementById("playerIdInput");
+  const pinInput = document.getElementById("playerPinInput");
+  if (idInput) idInput.value = "";
+  if (pinInput) pinInput.value = "";
+  const rememberEl = document.getElementById("rememberChallengeLogin");
+  if (rememberEl) rememberEl.checked = true;
+  document.getElementById("loginError").style.display = "none";
+  document.getElementById("loginPinError").style.display = "none";
+  document.getElementById("loginModalOverlay").style.display = "flex";
+  setTimeout(() => idInput?.focus(), 0);
+});
 const rememberChallengeLoginEl = document.getElementById("rememberChallengeLogin");
 if (rememberChallengeLoginEl) {
   rememberChallengeLoginEl.checked = isChallengeLoginRemembered();
@@ -3539,6 +3576,7 @@ document.getElementById("loginConfirmBtn").onclick = async () => {
     else clearChallengeSession();
 
     document.getElementById("loginModalOverlay").style.display = "none";
+    updateChallengeAccountBar();
     speakGuide("請選取模式");
     showChallengeMenu();
   }
