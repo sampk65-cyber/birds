@@ -1319,7 +1319,7 @@
       <input type="password" id="settingsPasswordInput" placeholder="輸入密碼">
       <label style="display:flex;align-items:center;gap:8px;margin:10px 0 2px;font-size:14px;font-weight:700;color:#355;">
         <input type="checkbox" id="rememberSettingsPassword" checked style="width:18px;height:18px;">
-        記住設置密碼
+        記住設置密碼（下次自動帶入）
       </label>
       <div class="field-error" id="passwordError" style="display:none;">密碼錯誤,再試一次</div>
       <div class="modal-btn-row">
@@ -3908,21 +3908,16 @@ document.getElementById("leaderboardCloseBtn").onclick = () => {
 // ---------- 設置密碼驗證 ----------
 const SETTINGS_PASSWORD = "LanYH&Birds";
 const SETTINGS_REMEMBER_KEY = "birdGuideRememberSettingsPassword";
-const SETTINGS_VERIFIED_KEY = "birdGuideSettingsPasswordVerified";
 let settingsUnlocked = false;
 
 function isSettingsPasswordRemembered() {
-  return localStorage.getItem(SETTINGS_REMEMBER_KEY) !== "0";
-}
-function hasRememberedSettingsAccess() {
-  return isSettingsPasswordRemembered() && localStorage.getItem(SETTINGS_VERIFIED_KEY) === "1";
+  return localStorage.getItem(SETTINGS_REMEMBER_KEY) === "1";
 }
 const rememberSettingsPasswordEl = document.getElementById("rememberSettingsPassword");
 if (rememberSettingsPasswordEl) {
   rememberSettingsPasswordEl.checked = isSettingsPasswordRemembered();
   rememberSettingsPasswordEl.addEventListener("change", () => {
     localStorage.setItem(SETTINGS_REMEMBER_KEY, rememberSettingsPasswordEl.checked ? "1" : "0");
-    if (!rememberSettingsPasswordEl.checked) localStorage.removeItem(SETTINGS_VERIFIED_KEY);
   });
 }
 
@@ -3963,8 +3958,8 @@ function exitSettings() {
   document.getElementById("modeSelect").style.display = "flex";
   document.getElementById("settingsBtn").style.display = "block";
   document.getElementById("groupBtn").style.display = "block";
-  // 若已選擇記住設置密碼，下次可直接進入；否則離開後重新上鎖。
-  settingsUnlocked = hasRememberedSettingsAccess();
+  // 離開設置後重新上鎖；若選擇記住密碼，下次只自動帶入，不跳過登入介面。
+  settingsUnlocked = false;
   if (window.__birdGuideGameLayerEntered !== true) {
     document.getElementById("bird-list-panel").style.display = "none";
     showHomeWelcome(true);
@@ -3999,18 +3994,15 @@ document.getElementById("groupBtn").onclick = () => enterGroups();
 document.getElementById("groupsBackBtn").onclick = () => exitGroups();
 
 document.getElementById("settingsBtn").onclick = () => {
-  if (hasRememberedSettingsAccess()) {
-    settingsUnlocked = true;
-    enterSettings();
-    return;
-  }
   settingsUnlocked = false;
-  document.getElementById("settingsPasswordInput").value = "";
   const rememberEl = document.getElementById("rememberSettingsPassword");
-  if (rememberEl) rememberEl.checked = isSettingsPasswordRemembered();
+  const passwordInput = document.getElementById("settingsPasswordInput");
+  const remembered = isSettingsPasswordRemembered();
+  if (rememberEl) rememberEl.checked = remembered;
+  if (passwordInput) passwordInput.value = remembered ? SETTINGS_PASSWORD : "";
   document.getElementById("passwordError").style.display = "none";
   document.getElementById("passwordModalOverlay").style.display = "flex";
-  document.getElementById("settingsPasswordInput").focus();
+  setTimeout(() => passwordInput?.focus(), 0);
 };
 
 document.getElementById("passwordCancelBtn").onclick = () => {
@@ -4022,10 +4014,8 @@ function submitSettingsPassword() {
   if (val === SETTINGS_PASSWORD) {
     settingsUnlocked = true;
     const rememberEl = document.getElementById("rememberSettingsPassword");
-    const shouldRemember = rememberEl ? rememberEl.checked : true;
+    const shouldRemember = rememberEl ? rememberEl.checked : false;
     localStorage.setItem(SETTINGS_REMEMBER_KEY, shouldRemember ? "1" : "0");
-    if (shouldRemember) localStorage.setItem(SETTINGS_VERIFIED_KEY, "1");
-    else localStorage.removeItem(SETTINGS_VERIFIED_KEY);
     document.getElementById("passwordModalOverlay").style.display = "none";
     enterSettings();
   } else {
