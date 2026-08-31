@@ -1273,7 +1273,7 @@
 <div class="top-right-nav">
   <button class="settings-btn" id="settingsBtn">設置</button>
   <button class="group-btn" id="groupBtn">族群</button>
-<button class="group-btn" id="mainSoundToggle" style="background:#2f8f57;color:#fff;">🔊 音效開</button>
+<button class="settings-btn" id="mainSoundToggle" style="background:#2f8f57;border-color:rgba(120,220,160,.88);color:#fff;">🎵 音樂開</button>
 </div>
 <div class="wrap">
 
@@ -2082,36 +2082,27 @@ function applyGeoPosition(position) {
 
 
 document.getElementById("birdLocationBtn").addEventListener("click", () => {
-  if ("geolocation" in navigator) {
-    setLocationStatus("本機測試：嘗試取得實際位置…");
-    navigator.geolocation.getCurrentPosition(
-      applyGeoPosition,
-      () => setLocationStatus("本機環境可能封鎖 GPS；可改用「測試定位」。", "err"),
-      { enableHighAccuracy:true, timeout:6000, maximumAge:15000 }
-    );
-  } else {
-    setLocationStatus("本機環境不支援 GPS；請使用「測試定位」。", "err");
+  if (!window.isSecureContext) {
+    setLocationStatus("定位需要 HTTPS 安全部署環境。", "err");
+    return;
   }
+  if (!("geolocation" in navigator)) {
+    setLocationStatus("此瀏覽器不支援定位功能。", "err");
+    return;
+  }
+  setLocationStatus("正在取得目前位置…");
+  navigator.geolocation.getCurrentPosition(
+    applyGeoPosition,
+    (err) => {
+      let msg = "定位失敗";
+      if (err && err.code === 1) msg = "定位權限被拒絕，請允許網站使用位置。";
+      else if (err && err.code === 2) msg = "目前無法取得位置，請確認 GPS／定位服務已開啟。";
+      else if (err && err.code === 3) msg = "定位逾時，請再試一次。";
+      setLocationStatus(msg, "err");
+    },
+    { enableHighAccuracy:true, timeout:12000, maximumAge:15000 }
+  );
 });
-
-
-(function addLocalLocationTester(){
-  const wrap = document.getElementById("birdLocationWrap");
-  const status = document.getElementById("birdLocationStatus");
-  if (!wrap || !status) return;
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "bird-location-btn";
-  btn.id = "birdLocationTestBtn";
-  btn.textContent = "🧪 測試定位";
-  btn.addEventListener("click", () => {
-    applyGeoPosition({
-      coords:{ latitude:24.14774, longitude:120.67365, accuracy:25 },
-      timestamp:Date.now()
-    });
-  });
-  wrap.insertBefore(btn, status);
-})();
 
 
 function openQuiz(birdId) {
@@ -2204,29 +2195,41 @@ document.addEventListener("touchstart", primeEmbeddedMusic, { capture: true, onc
 
 
 
-let uiSoundEnabled = localStorage.getItem("birdGuideUiSoundEnabled") !== "0";
+let backgroundMusicEnabled = localStorage.getItem("birdGuideBackgroundMusicEnabled") !== "0";
 
 function syncMainSoundToggle() {
   const btn = document.getElementById("mainSoundToggle");
   if (!btn) return;
-  btn.textContent = uiSoundEnabled ? "🔊 音效開" : "🔇 音效關";
-  btn.style.background = "#2f8f57";
+  btn.textContent = backgroundMusicEnabled ? "🎵 音樂開" : "🔇 音樂關";
+  btn.style.background = backgroundMusicEnabled ? "#2f8f57" : "#7b7f83";
   btn.style.color = "#fff";
 }
-document.getElementById("mainSoundToggle")?.addEventListener("click", () => {
-  uiSoundEnabled = !uiSoundEnabled;
-  localStorage.setItem("birdGuideUiSoundEnabled", uiSoundEnabled ? "1" : "0");
+function stopAllBackgroundMusic() {
+  ["embeddedWelcomeMusic", "embeddedGameMusic"].forEach(id => {
+    const audio = document.getElementById(id);
+    if (!audio) return;
+    try { audio.pause(); } catch (e) {}
+  });
+}
+document.getElementById("mainSoundToggle")?.addEventListener("click", async () => {
+  primeEmbeddedMusic();
+  backgroundMusicEnabled = !backgroundMusicEnabled;
+  localStorage.setItem("birdGuideBackgroundMusicEnabled", backgroundMusicEnabled ? "1" : "0");
   syncMainSoundToggle();
+  if (!backgroundMusicEnabled) {
+    stopAllBackgroundMusic();
+    return;
+  }
+  if (document.body.classList.contains("challenge-running")) await startMusic();
+  else await playHomeWelcomeMusic();
 });
 syncMainSoundToggle();
 
 function playShutterClick() {
-  if (!uiSoundEnabled) return;
   ensureAudio();
   clickSynth.triggerAttackRelease("C2", "16n");
 }
 function playModeSelectSound(mode) {
-  if (!uiSoundEnabled) return;
   ensureAudio();
   const now = Tone.now();
   clickSynth.triggerAttackRelease(mode === "explain" ? "G2" : "C2", "32n", now);
@@ -2239,20 +2242,19 @@ function flashModeButton(btn) {
   window.setTimeout(() => btn.classList.remove("mode-feedback"), 360);
 }
 function playHitSound() {
-  if (!uiSoundEnabled) return;
   ensureAudio();
   const now = Tone.now();
   chimeSynth.triggerAttackRelease("E6", "8n", now, 0.38);
   chimeSynth.triggerAttackRelease("C6", "8n", now + 0.16, 0.38);
 }
 function playMissSound() {
-  if (!uiSoundEnabled) return;
   ensureAudio();
   const now = Tone.now();
   chimeSynth.triggerAttackRelease("A3", "16n", now, 0.38);
   chimeSynth.triggerAttackRelease("F3", "8n", now + 0.1, 0.38);
 }
 async function startMusic() {
+  if (!backgroundMusicEnabled) return;
   const audio = document.getElementById("embeddedGameMusic");
   if (!audio) return;
   try {
@@ -2282,6 +2284,7 @@ let homeWelcomeCycleTimer = null;
 let homeWelcomeShowingPhoto = true;
 
 async function playHomeWelcomeMusic() {
+  if (!backgroundMusicEnabled) return;
   const audio = document.getElementById("embeddedWelcomeMusic");
   if (!audio) return;
   try {
