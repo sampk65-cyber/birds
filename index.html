@@ -1322,7 +1322,7 @@
     <div class="home-hero-content">
       <header class="app-header">
         <h1 id="heroTitle">小小鳥類解說員</h1>
-        <p id="heroSubtitle">Field Guide Vresion3. 6</p>
+        <p id="heroSubtitle">Field Guide Vresion3. 8</p>
       </header>
 
       <div class="mode-select" id="modeSelect">
@@ -1737,19 +1737,40 @@ const CONDITIONS = [
 
 const LEVEL_REQUIRED = { 1: 3, 2: 6, 3: 10, 4: 15 };
 
-// 完成分數:依這隻鳥「需答對題數」落在哪個區間決定一次性獎勵分數
-// 1-3題→1分 / 4-6題→2分 / 7-9題→3分 / 10-12題→5分 / 13-15題→7分
-function weightForRequiredCorrect(rc) {
+// V3.8 計分：以「每一隻鳥」為單位。
+// 每隻鳥共有 15 題，完成該鳥挑戰時依「實際答對題數」換算一次分數：
+// 0題→0分 / 1-3題→1分 / 4-6題→2分 / 7-9題→3分 / 10-12題→5分 / 13-15題→7分
+function scoreForBirdCorrectCount(correctCount) {
+  const rc = Math.max(0, Math.min(15, Number(correctCount) || 0));
+  if (rc === 0) return 0;
   if (rc <= 3) return 1;
   if (rc <= 6) return 2;
   if (rc <= 9) return 3;
   if (rc <= 12) return 5;
   return 7;
 }
+
+function getBirdCorrectCount(birdId) {
+  const answered = currentAnswered[birdId];
+  if (!answered || typeof answered !== "object") return 0;
+  return CONDITIONS.reduce((count, cond) => count + (answered[cond.key] === true ? 1 : 0), 0);
+}
+
+function getBirdChallengeScore(birdId) {
+  if (currentAnswered[birdId + "_captured"] !== true) return 0;
+  return scoreForBirdCorrectCount(getBirdCorrectCount(birdId));
+}
+
+function recalculateTotalScoreFromProgress() {
+  totalScore = birds.reduce((sum, bird) => sum + getBirdChallengeScore(bird.id), 0);
+  return totalScore;
+}
+
 let totalScore = 0;
 
 function getMaxScore() {
-  return birds.reduce((sum, b) => sum + weightForRequiredCorrect(b.requiredCorrect), 0);
+  // 每隻鳥最高 7 分；365 隻鳥時理論最高分為 365 × 7 = 2555。
+  return birds.length * 7;
 }
 
 function updateScoreBar() {
@@ -2680,7 +2701,9 @@ function attemptCapture() {
       currentAnswered[bird.id + "_eggBadge"] = pickWingedEggVariant();
     }
     if (GAME_MODE === "challenge" && !alreadyCaptured) {
-      totalScore += weightForRequiredCorrect(bird.requiredCorrect);
+      const birdScore = scoreForBirdCorrectCount(getBirdCorrectCount(bird.id));
+      currentAnswered[bird.id + "_score"] = birdScore;
+      totalScore += birdScore;
       updateScoreBar();
     }
     statusEl.textContent = "拍攝成功!";
@@ -3509,6 +3532,8 @@ function buildBirdsDoneMap() {
 
 function saveProgress() {
   if (!FIREBASE_ENABLED || !db || !currentPlayerId) return;
+  recalculateTotalScoreFromProgress();
+  updateScoreBar();
   const cleanProgress = JSON.parse(JSON.stringify(currentAnswered));
   db.collection("players").doc(currentPlayerId).set({
     id: currentPlayerId,
@@ -3691,7 +3716,7 @@ document.getElementById("loginConfirmBtn").onclick = async () => {
       } else {
         currentPlayerId = id;
         currentAnswered = {};
-        totalScore = data.score || 0;
+        totalScore = 0;
         if (data.progress && typeof data.progress === "object") {
           currentAnswered = data.progress;
         } else if (data.birdsDone) {
@@ -3703,6 +3728,7 @@ document.getElementById("loginConfirmBtn").onclick = async () => {
             }
           });
         }
+        recalculateTotalScoreFromProgress();
         if (!data.pin) {
           await docRef.set({ pin: pin }, { merge: true });
         }
