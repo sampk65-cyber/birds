@@ -1322,7 +1322,7 @@
     <div class="home-hero-content">
       <header class="app-header">
         <h1 id="heroTitle">小小鳥類解說員</h1>
-        <p id="heroSubtitle">Field Guide Vresion3. 5</p>
+        <p id="heroSubtitle">Field Guide Vresion3. 6</p>
       </header>
 
       <div class="mode-select" id="modeSelect">
@@ -2446,78 +2446,83 @@ function buildWingedEggBadgeSVG(variantValue) {
   const v = normalizeEggVariant(variantValue);
   const i = v - 1;
 
-  // 365 個索引各自使用不同色相；再疊加翅膀長度、角度、斑點、蛋殼光澤等變化。
   const hue = (i * 360 / 365);
   const hue2 = (hue + 38 + (i % 5) * 7) % 360;
   const shell = `hsl(${hue.toFixed(2)} 58% ${78 - (i % 4) * 4}%)`;
   const shell2 = `hsl(${hue2.toFixed(2)} 68% ${54 + (i % 3) * 5}%)`;
-  const wingTint = `hsl(${((hue + 196) % 360).toFixed(2)} 58% 91%)`;
-  const wingEdge = `hsl(${((hue + 205) % 360).toFixed(2)} 48% 62%)`;
-  const shield = `hsl(${((hue + 278) % 360).toFixed(2)} 52% 79%)`;
-  const shieldEdge = `hsl(${((hue + 294) % 360).toFixed(2)} 48% 54%)`;
+  const wingTint = `hsl(${((hue + 196) % 360).toFixed(2)} 58% 93%)`;
+  const wingEdge = `hsl(${((hue + 205) % 360).toFixed(2)} 48% 64%)`;
 
-  const wingStretch = 0.82 + (i % 9) * 0.035;
-  const wingLift = -8 + (Math.floor(i / 9) % 9) * 2;
-  const spotMode = i % 5;
-  const spotCount = 3 + (i % 6);
+  const bird = currentBirdId ? birds.find(b => b.id === currentBirdId) : null;
+  const level = Math.max(1, Math.min(4, Number(bird?.level || 1)));
+
+  const crownColors = {
+    1: { main:"#2fb25c", dark:"#19783a", gem:"#c8ffd7" },
+    2: { main:"#2e9bd6", dark:"#176b9d", gem:"#d5f3ff" },
+    3: { main:"#8f53c7", dark:"#63308f", gem:"#ecd8ff" },
+    4: { main:"#f2b928", dark:"#b57a00", gem:"#fff1a8" }
+  };
+  const cc = crownColors[level];
+
+  const spotCount = 4 + (i % 5);
   let spots = "";
   for (let s = 0; s < spotCount; s++) {
     const x = 45 + ((s * 11 + i * 3) % 20);
-    const y = 25 + ((s * 17 + i * 5) % 35);
-    const r = 1.2 + ((s + i) % 3) * .55;
-    const fill = spotMode % 2 === 0 ? shell2 : `hsla(${((hue+110)%360).toFixed(1)} 45% 38% /.62)`;
-    if (spotMode === 3 && s % 2 === 0) {
-      spots += `<path d="M${x-2} ${y} q2 -3 4 0 q-2 3 -4 0" fill="none" stroke="${fill}" stroke-width="1.5"/>`;
-    } else {
-      spots += `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" opacity=".72"/>`;
-    }
+    const y = 44 + ((s * 17 + i * 5) % 25);
+    const r = 1.15 + ((s + i) % 3) * .5;
+    const fill = (i % 2 === 0) ? shell2 : `hsla(${((hue+110)%360).toFixed(1)} 45% 38% /.62)`;
+    spots += `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" opacity=".68"/>`;
   }
 
-  const stripeOpacity = spotMode === 4 ? .34 : 0;
-  const shineX = 48 + (i % 5);
-
   return `
-  <svg viewBox="0 0 108 108" role="img" aria-label="飛行蛋過關徽章">
+  <svg viewBox="0 0 108 108" role="img" aria-label="完成挑戰徽章">
     <defs>
       <linearGradient id="eggShell${v}" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" stop-color="#fffdf8"/>
-        <stop offset=".38" stop-color="${shell}"/>
+        <stop offset=".42" stop-color="${shell}"/>
         <stop offset="1" stop-color="${shell2}"/>
       </linearGradient>
-      <linearGradient id="shield${v}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="${shield}"/>
-        <stop offset="1" stop-color="${shieldEdge}"/>
+      <linearGradient id="badgeBg${v}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${cc.gem}"/>
+        <stop offset="1" stop-color="${cc.main}"/>
       </linearGradient>
     </defs>
 
-    <path d="M20 14 H88 V63 Q88 80 54 96 Q20 80 20 63 Z"
-          fill="url(#shield${v})" stroke="rgba(150,112,55,.72)" stroke-width="2.5"/>
-    <path d="M26 19 H82" stroke="rgba(255,255,255,.74)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M20 17 H88 V63 Q88 80 54 96 Q20 80 20 63 Z"
+          fill="url(#badgeBg${v})" stroke="${cc.dark}" stroke-width="2.5"/>
+    <path d="M26 21 H82" stroke="rgba(255,255,255,.78)" stroke-width="2" stroke-linecap="round"/>
 
-    <g transform="translate(54 53) rotate(${wingLift*.25}) scale(${wingStretch} 1)">
-      <g transform="translate(-27 -4) rotate(${wingLift})">
-        <path d="M0 10 C-12 4 -22 -5 -25 -17 C-13 -15 -4 -9 5 -1 C1 -12 1 -20 4 -28 C14 -19 18 -8 18 4 C12 9 6 12 0 10Z"
+    <g transform="translate(54 58)">
+      <g transform="translate(-28 -2)">
+        <path d="M0 8 C-10 3 -18 -3 -22 -12 C-12 -11 -4 -7 5 -1 C2 -9 3 -15 6 -20 C14 -13 17 -5 16 4 C11 8 6 10 0 8Z"
               fill="${wingTint}" stroke="${wingEdge}" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M-17 -11 Q-5 -6 7 3 M-9 -18 Q1 -11 11 -1 M1 -22 Q8 -14 14 -5"
-              fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2" stroke-linecap="round"/>
       </g>
-      <g transform="translate(27 -4) scale(-1 1) rotate(${wingLift})">
-        <path d="M0 10 C-12 4 -22 -5 -25 -17 C-13 -15 -4 -9 5 -1 C1 -12 1 -20 4 -28 C14 -19 18 -8 18 4 C12 9 6 12 0 10Z"
+      <g transform="translate(28 -2) scale(-1 1)">
+        <path d="M0 8 C-10 3 -18 -3 -22 -12 C-12 -11 -4 -7 5 -1 C2 -9 3 -15 6 -20 C14 -13 17 -5 16 4 C11 8 6 10 0 8Z"
               fill="${wingTint}" stroke="${wingEdge}" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M-17 -11 Q-5 -6 7 3 M-9 -18 Q1 -11 11 -1 M1 -22 Q8 -14 14 -5"
-              fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2" stroke-linecap="round"/>
       </g>
     </g>
 
-    <ellipse cx="54" cy="53" rx="18" ry="25"
-             fill="url(#eggShell${v})" stroke="rgba(120,83,51,.6)" stroke-width="2"/>
-    <path d="M40 44 Q54 38 68 44 M39 53 Q54 47 69 53 M41 62 Q54 57 67 62"
-          fill="none" stroke="${shell2}" stroke-width="2" opacity="${stripeOpacity}"/>
+    <ellipse cx="54" cy="58" rx="18" ry="24"
+             fill="url(#eggShell${v})" stroke="rgba(120,83,51,.58)" stroke-width="2"/>
     ${spots}
-    <ellipse cx="${shineX}" cy="39" rx="5.2" ry="9.5" fill="rgba(255,255,255,.48)" transform="rotate(18 ${shineX} 39)"/>
-    <path d="M34 22 l2.2 5 5 .8 -4 3.2 1.2 5 -4.4-2.7 -4.4 2.7 1.2-5 -4-3.2 5-.8Z"
-          fill="rgba(255,246,176,.88)"/>
-    <circle cx="78" cy="31" r="2.6" fill="rgba(255,255,255,.82)"/>
+
+    <ellipse cx="48" cy="48" rx="4.1" ry="6.2" fill="#2a2430"/>
+    <ellipse cx="60" cy="48" rx="4.1" ry="6.2" fill="#2a2430"/>
+    <circle cx="49.2" cy="46.2" r="1.45" fill="#fff"/>
+    <circle cx="61.2" cy="46.2" r="1.45" fill="#fff"/>
+    <circle cx="47.1" cy="56.2" r="2.0" fill="#f49aaa" opacity=".75"/>
+    <circle cx="60.9" cy="56.2" r="2.0" fill="#f49aaa" opacity=".75"/>
+    <path d="M50 57 Q54 61 58 57" fill="none" stroke="#b54b55" stroke-width="1.7" stroke-linecap="round"/>
+
+    <g transform="translate(31 18)">
+      <path d="M2 18 L7 3 L17 11 L24 0 L31 11 L41 3 L46 18 Z"
+            fill="${cc.main}" stroke="${cc.dark}" stroke-width="2" stroke-linejoin="round"/>
+      <rect x="3" y="16" width="42" height="7" rx="2.5" fill="${cc.main}" stroke="${cc.dark}" stroke-width="2"/>
+      <circle cx="7" cy="3" r="2.3" fill="${cc.gem}" stroke="${cc.dark}" stroke-width="1"/>
+      <circle cx="24" cy="0" r="2.5" fill="${cc.gem}" stroke="${cc.dark}" stroke-width="1"/>
+      <circle cx="41" cy="3" r="2.3" fill="${cc.gem}" stroke="${cc.dark}" stroke-width="1"/>
+    </g>
   </svg>`;
 }
 
