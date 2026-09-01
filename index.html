@@ -358,14 +358,20 @@
   .thumb-photo-wrap { position: relative; width: 100%; height: 100%; }
   .photo-credit {
     position: absolute;
-    left: 0; right: 0; bottom: 0;
-    background: rgba(20, 20, 15, 0.6);
-    color: #fff;
+    left: 8px;
+    bottom: 7px;
+    z-index: 8;
+    color: rgba(255,255,255,0.98);
     font-family: var(--font-sans);
     font-size: 9px;
     font-weight: 600;
-    padding: 2px 6px;
-    text-align: center;
+    letter-spacing: .2px;
+    padding: 0;
+    text-align: left;
+    background: transparent;
+    text-shadow: 0 1px 4px rgba(0,0,0,.92), 0 0 2px rgba(0,0,0,.75);
+    pointer-events: none;
+    white-space: nowrap;
   }
   .mystery-placeholder {
     position: relative;
@@ -1187,12 +1193,124 @@
     .home-welcome-credit { left: 14px; bottom: 14px; font-size: 15px; }
   }
 
+
+/* V2.1 正式開始：鳥類關鍵字搜尋（其他模式不顯示） */
+.bird-search-wrap{
+  width:min(680px,calc(100% - 24px));
+  margin:12px auto 8px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  background:rgba(255,255,255,.94);
+  border:2px solid rgba(20,24,33,.16);
+  border-radius:16px;
+  box-shadow:0 6px 18px rgba(20,24,33,.08);
+}
+.bird-search-icon{font-size:22px;line-height:1;opacity:.62;flex:0 0 auto}
+.bird-search-input{
+  flex:1;
+  min-width:0;
+  border:0;
+  outline:0;
+  background:transparent;
+  font:inherit;
+  font-size:16px;
+  color:#141821;
+  padding:5px 2px;
+}
+.bird-search-input::placeholder{color:rgba(20,24,33,.48)}
+.bird-search-clear{
+  width:30px;height:30px;border:0;border-radius:50%;
+  background:rgba(20,24,33,.08);color:#141821;
+  font-size:21px;line-height:28px;cursor:pointer;
+}
+.bird-search-status{
+  width:min(680px,calc(100% - 24px));
+  margin:0 auto 8px;
+  text-align:left;
+  font-size:13px;
+  color:rgba(20,24,33,.68);
+}
+.bird-search-empty{
+  grid-column:1/-1;
+  padding:28px 16px;
+  text-align:center;
+  font-weight:700;
+  opacity:.65;
+}
+
+
+/* V2.2 正式開始：定位功能 */
+.bird-location-wrap{width:min(680px,calc(100% - 24px));margin:8px auto 12px;padding:10px;background:rgba(255,255,255,.92);border:2px solid rgba(20,24,33,.12);border-radius:16px;box-shadow:0 6px 18px rgba(20,24,33,.06);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bird-location-btn{border:0;border-radius:12px;padding:10px 14px;font:inherit;font-weight:700;background:#eef7f3;color:#16362c;cursor:pointer}
+.bird-location-btn:active{transform:scale(.98)}
+.bird-location-status{flex:1;min-width:210px;font-size:13px;line-height:1.5;color:rgba(20,24,33,.72)}
+.bird-location-status.ok{color:#17633f;font-weight:700}
+.bird-location-status.err{color:#a52828;font-weight:700}
+
+
+/* V3.0 設置：鳥類定位資料 */
+.settings-location-card{
+  margin:14px 0;padding:14px;border-radius:16px;background:rgba(238,247,243,.96);
+  border:2px solid rgba(23,99,63,.16)
+}
+.settings-location-title{font-weight:800;margin-bottom:10px;color:#16362c}
+.settings-location-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.settings-location-btn{
+  border:0;border-radius:12px;padding:10px 14px;font:inherit;font-weight:800;
+  background:#2f8f57;color:#fff;cursor:pointer
+}
+.settings-location-btn.secondary{background:#e7eee9;color:#244238}
+.settings-location-status{font-size:13px;margin:8px 0;color:#42564d}
+.settings-location-status.ok{color:#17633f;font-weight:700}
+.settings-location-status.err{color:#a52828;font-weight:700}
+.settings-location-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.settings-location-grid label{font-size:12px;font-weight:700;color:#4a5a53}
+.settings-location-grid input{
+  width:100%;margin-top:4px;padding:8px;border:1px solid rgba(20,24,33,.16);
+  border-radius:10px;background:#fff;font:inherit
+}
+@media(max-width:640px){.settings-location-grid{grid-template-columns:1fr}}
+
+
+  /* V3.5：成功抓拍徽章 */
+  .capture-result-line{
+    position:relative;
+    min-height:34px;
+    margin-bottom:8px;
+  }
+  .capture-result-line .progress-line{ margin-bottom:0; }
+  .winged-egg-badge{
+    display:none;
+    position:absolute;
+    right:6px;
+    top:-8px;
+    width:72px;
+    height:72px;
+    z-index:8;
+    filter:drop-shadow(0 5px 9px rgba(47,31,63,.22));
+    animation:eggBadgePop .44s cubic-bezier(.2,.9,.28,1.25);
+    pointer-events:none;
+  }
+  .winged-egg-badge.show{ display:block; }
+  .winged-egg-badge svg{ width:100%;height:100%;display:block;overflow:visible; }
+  @keyframes eggBadgePop{
+    0%{transform:scale(.25) rotate(-12deg);opacity:0}
+    70%{transform:scale(1.12) rotate(3deg);opacity:1}
+    100%{transform:scale(1) rotate(0);opacity:1}
+  }
+  @media(max-width:420px){
+    .winged-egg-badge{width:64px;height:64px;right:2px;top:-6px}
+  }
+
 </style>
 </head>
 <body>
 <div class="top-right-nav">
   <button class="settings-btn" id="settingsBtn">設置</button>
   <button class="group-btn" id="groupBtn">族群</button>
+<button class="settings-btn" id="mainSoundToggle" style="background:#2f8f57;border-color:rgba(120,220,160,.88);color:#fff;padding-left:12px;padding-right:12px;">聲音開</button>
 </div>
 <div class="wrap">
 
@@ -1204,7 +1322,7 @@
     <div class="home-hero-content">
       <header class="app-header">
         <h1 id="heroTitle">小小鳥類解說員</h1>
-        <p id="heroSubtitle">Field Guide Vresion2. 0</p>
+        <p id="heroSubtitle">Field Guide Vresion3. 8</p>
       </header>
 
       <div class="mode-select" id="modeSelect">
@@ -1230,6 +1348,10 @@
     <div class="modal-card">
       <div class="modal-title">設置密碼</div>
       <input type="password" id="settingsPasswordInput" placeholder="輸入密碼">
+      <label style="display:flex;align-items:center;gap:8px;margin:10px 0 2px;font-size:14px;font-weight:700;color:#355;">
+        <input type="checkbox" id="rememberSettingsPassword" checked style="width:18px;height:18px;">
+        記住設置密碼（下次自動帶入）
+      </label>
       <div class="field-error" id="passwordError" style="display:none;">密碼錯誤,再試一次</div>
       <div class="modal-btn-row">
         <button class="modal-btn-cancel" id="passwordCancelBtn">取消</button>
@@ -1245,6 +1367,10 @@
       <div class="field-error" id="loginError" style="display:none;">請輸入 ID</div>
       <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="playerPinInput" placeholder="設定/輸入 4 位數通行碼" style="margin-top:10px;">
       <div class="hint" style="margin:4px 0 0;">第一次使用這個 ID 會自動設定成你的通行碼,之後要輸入一樣的碼才能繼續,別人才不能用同名字看到你的進度</div>
+      <label style="display:flex;align-items:center;gap:8px;margin:10px 0 2px;font-size:14px;font-weight:700;color:#355;">
+        <input type="checkbox" id="rememberChallengeLogin" checked style="width:18px;height:18px;">
+        記住登入，下次正式開始直接進入
+      </label>
       <div class="field-error" id="loginPinError" style="display:none;">通行碼錯誤,如果這不是你的 ID,請換一個名字</div>
       <div class="modal-btn-row">
         <button class="modal-btn-cancel" id="loginCancelBtn">取消</button>
@@ -1263,7 +1389,15 @@
         <span id="playerIdLabel"></span>
         <button class="hint-btn" id="leaderboardBtn">查看排行榜</button>
       </div>
-      <div class="bird-select-grid" id="birdGrid"></div>
+      <div class="bird-search-wrap" id="birdSearchWrap" style="display:none;">
+        <span class="bird-search-icon" aria-hidden="true">⌕</span>
+        <input type="search" id="birdSearchInput" class="bird-search-input"
+               placeholder="搜尋鳥類關鍵字…" autocomplete="off" enterkeyhint="search"
+               aria-label="搜尋鳥類">
+        <button type="button" id="birdSearchClear" class="bird-search-clear" aria-label="清除搜尋">×</button>
+      </div>
+      <div class="bird-search-status" id="birdSearchStatus" style="display:none;"></div>
+<div class="bird-select-grid" id="birdGrid"></div>
     </div>
 
     <div class="modal-overlay" id="leaderboardModalOverlay" style="display:none;">
@@ -1285,6 +1419,7 @@
           <div class="scene-bg" id="revealScene"></div>
           <div class="mystery-placeholder" id="revealMysteryPlaceholder"></div>
           <img class="reveal-photo" id="revealPhoto" alt="">
+          <div class="photo-credit" id="revealPhotoCredit" style="display:none;"></div>
           <div class="veil" id="veil"></div>
           <div class="who-am-i-meme" id="whoAmIMeme" style="display:none;"><span class="challenge-bird-name"></span><span class="challenge-bird-question">長怎樣</span></div>
           <div class="viewfinder-corners">
@@ -1293,7 +1428,10 @@
           </div>
           <div class="polaroid-caption" id="polaroidCaption"></div>
         </div>
-        <div class="progress-line">答對條件 <b id="correctCount">0</b> / <span id="requiredCount">0</span></div>
+        <div class="capture-result-line">
+          <div class="progress-line">答對條件 <b id="correctCount">0</b> / <span id="requiredCount">0</span></div>
+          <div class="winged-egg-badge" id="wingedEggBadge" aria-label="過關徽章"></div>
+        </div>
 
         <div id="qArea"></div>
 
@@ -1330,7 +1468,14 @@
   <!-- ============ CHALLENGE MENU VIEW ============ -->
   <div class="view" id="view-challenge-menu">
     <div class="stamp">選擇挑戰模式</div>
-    <div class="challenge-menu-grid">
+    <div id="challengeAccountBar" style="display:none;align-items:center;justify-content:space-between;gap:10px;margin:0 0 14px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.84);border:1px solid rgba(35,90,65,.15);">
+      <div style="min-width:0;">
+        <div style="font-size:12px;color:#6b746f;font-weight:700;">目前登入</div>
+        <div id="challengeAccountText" style="font-size:14px;color:#214f3b;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+      </div>
+      <button type="button" id="switchChallengeAccountBtn" style="border:0;border-radius:10px;padding:8px 10px;background:#edf3ef;color:#24563e;font-weight:800;font:inherit;white-space:nowrap;">切換帳號</button>
+    </div>
+<div class="challenge-menu-grid">
       <button class="challenge-card" id="menuGalleryBtn">
         <div class="challenge-card-title">1. 圖鑑模式</div>
         <div class="challenge-card-desc">直接瀏覽每一種鳥的完整資料與照片,不用答題</div>
@@ -1473,6 +1618,22 @@
       </select>
     </div>
 
+<div class="settings-location-card" id="settingsLocationCard">
+  <div class="settings-location-title">📍 鳥類定位紀錄</div>
+  <div class="settings-location-actions">
+    <button type="button" class="settings-location-btn" id="settingsLocationBtn">開啟定位並記錄位置</button>
+    <button type="button" class="settings-location-btn secondary" id="settingsLocationClearBtn">清除位置</button>
+  </div>
+  <div class="settings-location-status" id="settingsLocationStatus">尚未記錄位置</div>
+  <div class="settings-location-grid">
+    <label>地名<input type="text" id="settingsLocationName" placeholder="自動取得，也可自行輸入"></label>
+    <label>緯度<input type="text" id="settingsLatitude" readonly></label>
+    <label>經度<input type="text" id="settingsLongitude" readonly></label>
+    <label>精度<input type="text" id="settingsAccuracy" readonly></label>
+    <label>定位時間<input type="text" id="settingsLocationTime" readonly></label>
+  </div>
+</div>
+
     <div class="field">
       <label id="photoFieldLabel">上傳照片(可選)</label>
       <input type="file" id="f_photo" accept="image/*">
@@ -1501,7 +1662,8 @@
 
       <div class="section-title">匯出資料(供接 Firestore 用)</div>
       <div class="hint">複製此 JSON,之後可直接匯入 Firestore 對應集合</div>
-      <div class="export-box" id="exportBox"></div>
+      
+<div class="export-box" id="exportBox"></div>
     </div>
 
   </div>
@@ -1575,19 +1737,40 @@ const CONDITIONS = [
 
 const LEVEL_REQUIRED = { 1: 3, 2: 6, 3: 10, 4: 15 };
 
-// 完成分數:依這隻鳥「需答對題數」落在哪個區間決定一次性獎勵分數
-// 1-3題→1分 / 4-6題→2分 / 7-9題→3分 / 10-12題→5分 / 13-15題→7分
-function weightForRequiredCorrect(rc) {
+// V3.8 計分：以「每一隻鳥」為單位。
+// 每隻鳥共有 15 題，完成該鳥挑戰時依「實際答對題數」換算一次分數：
+// 0題→0分 / 1-3題→1分 / 4-6題→2分 / 7-9題→3分 / 10-12題→5分 / 13-15題→7分
+function scoreForBirdCorrectCount(correctCount) {
+  const rc = Math.max(0, Math.min(15, Number(correctCount) || 0));
+  if (rc === 0) return 0;
   if (rc <= 3) return 1;
   if (rc <= 6) return 2;
   if (rc <= 9) return 3;
   if (rc <= 12) return 5;
   return 7;
 }
+
+function getBirdCorrectCount(birdId) {
+  const answered = currentAnswered[birdId];
+  if (!answered || typeof answered !== "object") return 0;
+  return CONDITIONS.reduce((count, cond) => count + (answered[cond.key] === true ? 1 : 0), 0);
+}
+
+function getBirdChallengeScore(birdId) {
+  if (currentAnswered[birdId + "_captured"] !== true) return 0;
+  return scoreForBirdCorrectCount(getBirdCorrectCount(birdId));
+}
+
+function recalculateTotalScoreFromProgress() {
+  totalScore = birds.reduce((sum, bird) => sum + getBirdChallengeScore(bird.id), 0);
+  return totalScore;
+}
+
 let totalScore = 0;
 
 function getMaxScore() {
-  return birds.reduce((sum, b) => sum + weightForRequiredCorrect(b.requiredCorrect), 0);
+  // 每隻鳥最高 7 分；365 隻鳥時理論最高分為 365 × 7 = 2555。
+  return birds.length * 7;
 }
 
 function updateScoreBar() {
@@ -1801,14 +1984,138 @@ let GAME_MODE = "explain";
 let currentAnswered = {};
 
 // ---------- 前台:鳥類列表 ----------
+
+function setSettingsLocationStatus(text, type="") {
+  const el = document.getElementById("settingsLocationStatus");
+  if (!el) return;
+  el.className = "settings-location-status" + (type ? " " + type : "");
+  el.textContent = text;
+}
+function syncSettingsLocationFields(loc) {
+  const name = document.getElementById("settingsLocationName");
+  const lat = document.getElementById("settingsLatitude");
+  const lng = document.getElementById("settingsLongitude");
+  const acc = document.getElementById("settingsAccuracy");
+  const time = document.getElementById("settingsLocationTime");
+  if (!loc) {
+    if (name) name.value = "";
+    if (lat) lat.value = "";
+    if (lng) lng.value = "";
+    if (acc) acc.value = "";
+    if (time) time.value = "";
+    setSettingsLocationStatus("尚未記錄位置");
+    return;
+  }
+  if (name) name.value = loc.name || "";
+  if (lat) lat.value = Number(loc.latitude).toFixed(6);
+  if (lng) lng.value = Number(loc.longitude).toFixed(6);
+  if (acc) acc.value = Math.round(loc.accuracy || 0) + " 公尺";
+  if (time) time.value = formatGeoTime(loc.timestamp || Date.now());
+  setSettingsLocationStatus("位置已記錄 ✓", "ok");
+}
+
+async function reverseGeocodeLocation(lat, lng) {
+  try {
+    const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lng)}&localityLanguage=zh`;
+    const res = await fetch(url, { cache:"no-store" });
+    if (!res.ok) throw new Error("reverse geocode failed");
+    const data = await res.json();
+    const parts = [
+      data.locality || data.city || data.principalSubdivision,
+      data.localityInfo?.administrative?.find(x => x.order === 6)?.name
+    ].filter(Boolean);
+    return [...new Set(parts)].join(" ") || data.principalSubdivision || "";
+  } catch (e) {
+    console.warn("地名取得失敗", e);
+    return "";
+  }
+}
+
+document.getElementById("settingsLocationBtn")?.addEventListener("click", () => {
+  if (!("geolocation" in navigator)) {
+    setSettingsLocationStatus("此瀏覽器不支援定位。", "err");
+    return;
+  }
+  setSettingsLocationStatus("正在取得位置…");
+  navigator.geolocation.getCurrentPosition(
+    async pos => {
+      const typedName = (document.getElementById("settingsLocationName")?.value || "").trim();
+      settingsBirdLocation = {
+        name:typedName,
+        latitude:pos.coords.latitude,
+        longitude:pos.coords.longitude,
+        accuracy:pos.coords.accuracy,
+        timestamp:pos.timestamp || Date.now()
+      };
+      syncSettingsLocationFields(settingsBirdLocation);
+      if (!settingsBirdLocation.name) {
+        setSettingsLocationStatus("定位成功，正在取得地名…", "ok");
+        const placeName = await reverseGeocodeLocation(settingsBirdLocation.latitude, settingsBirdLocation.longitude);
+        if (settingsBirdLocation) {
+          settingsBirdLocation.name = placeName || "";
+          syncSettingsLocationFields(settingsBirdLocation);
+          setSettingsLocationStatus(placeName ? "位置與地名已記錄 ✓" : "位置已記錄 ✓（地名未取得）", "ok");
+        }
+      }
+    },
+    err => {
+      let msg = "定位失敗";
+      if (err?.code === 1) msg = "定位權限被拒絕，請允許位置權限。";
+      else if (err?.code === 2) msg = "無法取得位置，請確認 GPS 已開啟。";
+      else if (err?.code === 3) msg = "定位逾時，請再試一次。";
+      setSettingsLocationStatus(msg, "err");
+    },
+    { enableHighAccuracy:true, timeout:12000, maximumAge:15000 }
+  );
+});
+document.getElementById("settingsLocationClearBtn")?.addEventListener("click", () => {
+  settingsBirdLocation = null;
+  syncSettingsLocationFields(null);
+});
+
+document.getElementById("settingsLocationName")?.addEventListener("input", (e) => {
+  if (!settingsBirdLocation) return;
+  settingsBirdLocation.name = String(e.target.value || "").trim();
+});
+
+function normalizeBirdSearchText(value) {
+  return String(value || "").toLowerCase().replace(/\s+/g, "");
+}
+
+function birdMatchesSearch(bird, keyword) {
+  if (!keyword) return true;
+  const conditionText = bird.conditions
+    ? Object.values(bird.conditions).flat().join(" ")
+    : "";
+  const searchable = [
+    bird.name,
+    bird.id,
+    bird.story,
+    bird.season,
+    conditionText
+  ].join(" ");
+  return normalizeBirdSearchText(searchable).includes(keyword);
+}
+
 function renderBirdGrid() {
   const grid = document.getElementById("birdGrid");
+  const searchInput = document.getElementById("birdSearchInput");
+  const status = document.getElementById("birdSearchStatus");
   grid.innerHTML = "";
-  birds.forEach((b, i) => {
+
+  const keyword = (GAME_MODE === "challenge" && searchInput)
+    ? normalizeBirdSearchText(searchInput.value)
+    : "";
+
+  const visibleBirds = birds
+    .map((b, originalIndex) => ({ b, originalIndex }))
+    .filter(({ b }) => birdMatchesSearch(b, keyword));
+
+  visibleBirds.forEach(({ b, originalIndex }) => {
     const done = (currentAnswered[b.id + "_done"] === true);
     const tile = document.createElement("div");
     tile.className = "bird-tile" + (done ? " done" : "");
-    const photoCredit = b.photographer ? `<div class="photo-credit">攝影:${b.photographer}</div>` : "";
+    const photoCredit = b.photographer ? `<div class="photo-credit">${b.photographer}</div>` : "";
     const thumbInner = (done && b.photoUrl)
       ? `<div class="thumb-photo-wrap"><img src="${b.photoUrl}" alt="${b.name}" style="width:100%;height:100%;object-fit:cover;">${photoCredit}</div>`
       : `<div class="mystery-placeholder">
@@ -1816,7 +2123,7 @@ function renderBirdGrid() {
           <div class="mystery-qmark">?</div>
         </div>`;
     tile.innerHTML = `
-      <div class="index">No. ${String(i + 1).padStart(3, "0")}</div>
+      <div class="index">No. ${String(originalIndex + 1).padStart(3, "0")}</div>
       <div class="thumb">${thumbInner}</div>
       <div class="name">${b.name}</div>
       <div class="level">${done ? "已解鎖" : "LV." + b.level + " " + LEVEL_LABEL[b.level]}</div>
@@ -1824,8 +2131,69 @@ function renderBirdGrid() {
     tile.onclick = () => openQuiz(b.id);
     grid.appendChild(tile);
   });
+
+  if (GAME_MODE === "challenge" && status) {
+    if (keyword) {
+      status.style.display = "block";
+      status.textContent = visibleBirds.length
+        ? `找到 ${visibleBirds.length} 種鳥類`
+        : "找不到符合的鳥類";
+    } else {
+      status.style.display = "none";
+      status.textContent = "";
+    }
+  }
+
+  if (!visibleBirds.length && keyword) {
+    const empty = document.createElement("div");
+    empty.className = "bird-search-empty";
+    empty.textContent = "沒有符合這個關鍵字的鳥類";
+    grid.appendChild(empty);
+  }
 }
 
+
+document.getElementById("birdSearchInput").addEventListener("input", () => {
+  if (GAME_MODE === "challenge") renderBirdGrid();
+});
+
+document.getElementById("birdSearchClear").addEventListener("click", () => {
+  const input = document.getElementById("birdSearchInput");
+  input.value = "";
+  input.focus();
+  if (GAME_MODE === "challenge") renderBirdGrid();
+});
+
+let currentGeoLocation = null;
+let settingsBirdLocation = null;
+
+function formatGeoTime(ts) {
+  try { return new Date(ts).toLocaleString("zh-TW", { hour12:false }); }
+  catch (e) { return ""; }
+}
+
+function setLocationStatus(text, type="") {
+  ["birdLocationStatus", "challengeLocationStatus"].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = "bird-location-status" + (type ? " " + type : "");
+    el.textContent = text;
+  });
+}
+
+function applyGeoPosition(position) {
+  currentGeoLocation = {
+    latitude: position.coords.latitude,
+    longitude: position.coords.longitude,
+    accuracy: position.coords.accuracy,
+    timestamp: position.timestamp || Date.now()
+  };
+  const lat = currentGeoLocation.latitude.toFixed(5);
+  const lng = currentGeoLocation.longitude.toFixed(5);
+  const acc = Math.round(currentGeoLocation.accuracy || 0);
+  const time = formatGeoTime(currentGeoLocation.timestamp);
+  setLocationStatus(`定位成功 ✓  ${lat}, ${lng}｜精度約 ${acc} 公尺${time ? "｜" + time : ""}`, "ok");
+}
 function openQuiz(birdId) {
   document.getElementById("birdGrid").classList.remove("tiffany-pulse");
   if (GAME_MODE === "challenge") setChallengeInteractionLock(true);
@@ -1915,11 +2283,65 @@ document.addEventListener("pointerdown", primeEmbeddedMusic, { capture: true, on
 document.addEventListener("touchstart", primeEmbeddedMusic, { capture: true, once: true, passive: true });
 
 
+
+let masterSoundEnabled = localStorage.getItem("birdGuideMasterSoundEnabled");
+if (masterSoundEnabled === null) {
+  masterSoundEnabled = localStorage.getItem("birdGuideBackgroundMusicEnabled") !== "0";
+} else {
+  masterSoundEnabled = masterSoundEnabled !== "0";
+}
+// 相容舊程式裡既有的背景音樂判斷
+let backgroundMusicEnabled = masterSoundEnabled;
+
+function syncMainSoundToggle() {
+  const btn = document.getElementById("mainSoundToggle");
+  if (!btn) return;
+  btn.textContent = masterSoundEnabled ? "聲音開" : "聲音關";
+  btn.style.background = masterSoundEnabled ? "#2f8f57" : "#7b7f83";
+  btn.style.color = "#fff";
+}
+function stopAllBackgroundMusic() {
+  ["embeddedWelcomeMusic", "embeddedGameMusic"].forEach(id => {
+    const audio = document.getElementById(id);
+    if (!audio) return;
+    try { audio.pause(); } catch (e) {}
+  });
+}
+function silenceAllAudio() {
+  stopAllBackgroundMusic();
+  try {
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+  } catch (e) {}
+}
+document.getElementById("mainSoundToggle")?.addEventListener("click", async () => {
+  masterSoundEnabled = !masterSoundEnabled;
+  backgroundMusicEnabled = masterSoundEnabled;
+  localStorage.setItem("birdGuideMasterSoundEnabled", masterSoundEnabled ? "1" : "0");
+  localStorage.setItem("birdGuideBackgroundMusicEnabled", masterSoundEnabled ? "1" : "0");
+  syncMainSoundToggle();
+
+  if (!masterSoundEnabled) {
+    silenceAllAudio();
+    return;
+  }
+
+  embeddedMusicUnlocked = true;
+  stopAllBackgroundMusic();
+  if (document.body.classList.contains("challenge-running")) {
+    await startMusic();
+  } else {
+    await playHomeWelcomeMusic();
+  }
+});
+syncMainSoundToggle();
+
 function playShutterClick() {
+  if (!masterSoundEnabled) return;
   ensureAudio();
   clickSynth.triggerAttackRelease("C2", "16n");
 }
 function playModeSelectSound(mode) {
+  if (!masterSoundEnabled) return;
   ensureAudio();
   const now = Tone.now();
   clickSynth.triggerAttackRelease(mode === "explain" ? "G2" : "C2", "32n", now);
@@ -1932,18 +2354,21 @@ function flashModeButton(btn) {
   window.setTimeout(() => btn.classList.remove("mode-feedback"), 360);
 }
 function playHitSound() {
+  if (!masterSoundEnabled) return;
   ensureAudio();
   const now = Tone.now();
   chimeSynth.triggerAttackRelease("E6", "8n", now, 0.38);
   chimeSynth.triggerAttackRelease("C6", "8n", now + 0.16, 0.38);
 }
 function playMissSound() {
+  if (!masterSoundEnabled) return;
   ensureAudio();
   const now = Tone.now();
   chimeSynth.triggerAttackRelease("A3", "16n", now, 0.38);
   chimeSynth.triggerAttackRelease("F3", "8n", now + 0.1, 0.38);
 }
 async function startMusic() {
+  if (!backgroundMusicEnabled) return;
   const audio = document.getElementById("embeddedGameMusic");
   if (!audio) return;
   try {
@@ -1973,6 +2398,7 @@ let homeWelcomeCycleTimer = null;
 let homeWelcomeShowingPhoto = true;
 
 async function playHomeWelcomeMusic() {
+  if (!backgroundMusicEnabled) return;
   const audio = document.getElementById("embeddedWelcomeMusic");
   if (!audio) return;
   try {
@@ -2023,6 +2449,120 @@ function hideHomeWelcome() {
   stage.classList.remove("show");
   stage.setAttribute("aria-hidden", "true");
 }
+
+
+// ---------- V3.5 隱藏式 365 種飛行蛋徽章 ----------
+// 不顯示清單／圖鑑／預覽；只有成功抓拍後才顯示當次取得的一枚。
+function normalizeEggVariant(value) {
+  const n = Number(value);
+  if (Number.isFinite(n) && n >= 1 && n <= 365) return Math.floor(n);
+  return 1;
+}
+
+function pickWingedEggVariant() {
+  return 1 + Math.floor(Math.random() * 365);
+}
+
+function buildWingedEggBadgeSVG(variantValue) {
+  const v = normalizeEggVariant(variantValue);
+  const i = v - 1;
+
+  const hue = (i * 360 / 365);
+  const hue2 = (hue + 38 + (i % 5) * 7) % 360;
+  const shell = `hsl(${hue.toFixed(2)} 58% ${78 - (i % 4) * 4}%)`;
+  const shell2 = `hsl(${hue2.toFixed(2)} 68% ${54 + (i % 3) * 5}%)`;
+  const wingTint = `hsl(${((hue + 196) % 360).toFixed(2)} 58% 93%)`;
+  const wingEdge = `hsl(${((hue + 205) % 360).toFixed(2)} 48% 64%)`;
+
+  const bird = currentBirdId ? birds.find(b => b.id === currentBirdId) : null;
+  const level = Math.max(1, Math.min(4, Number(bird?.level || 1)));
+
+  const crownColors = {
+    1: { main:"#2fb25c", dark:"#19783a", gem:"#c8ffd7" },
+    2: { main:"#2e9bd6", dark:"#176b9d", gem:"#d5f3ff" },
+    3: { main:"#8f53c7", dark:"#63308f", gem:"#ecd8ff" },
+    4: { main:"#f2b928", dark:"#b57a00", gem:"#fff1a8" }
+  };
+  const cc = crownColors[level];
+
+  const spotCount = 4 + (i % 5);
+  let spots = "";
+  for (let s = 0; s < spotCount; s++) {
+    const x = 45 + ((s * 11 + i * 3) % 20);
+    const y = 44 + ((s * 17 + i * 5) % 25);
+    const r = 1.15 + ((s + i) % 3) * .5;
+    const fill = (i % 2 === 0) ? shell2 : `hsla(${((hue+110)%360).toFixed(1)} 45% 38% /.62)`;
+    spots += `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" opacity=".68"/>`;
+  }
+
+  return `
+  <svg viewBox="0 0 108 108" role="img" aria-label="完成挑戰徽章">
+    <defs>
+      <linearGradient id="eggShell${v}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#fffdf8"/>
+        <stop offset=".42" stop-color="${shell}"/>
+        <stop offset="1" stop-color="${shell2}"/>
+      </linearGradient>
+      <linearGradient id="badgeBg${v}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${cc.gem}"/>
+        <stop offset="1" stop-color="${cc.main}"/>
+      </linearGradient>
+    </defs>
+
+    <path d="M20 17 H88 V63 Q88 80 54 96 Q20 80 20 63 Z"
+          fill="url(#badgeBg${v})" stroke="${cc.dark}" stroke-width="2.5"/>
+    <path d="M26 21 H82" stroke="rgba(255,255,255,.78)" stroke-width="2" stroke-linecap="round"/>
+
+    <g transform="translate(54 58)">
+      <g transform="translate(-28 -2)">
+        <path d="M0 8 C-10 3 -18 -3 -22 -12 C-12 -11 -4 -7 5 -1 C2 -9 3 -15 6 -20 C14 -13 17 -5 16 4 C11 8 6 10 0 8Z"
+              fill="${wingTint}" stroke="${wingEdge}" stroke-width="2" stroke-linejoin="round"/>
+      </g>
+      <g transform="translate(28 -2) scale(-1 1)">
+        <path d="M0 8 C-10 3 -18 -3 -22 -12 C-12 -11 -4 -7 5 -1 C2 -9 3 -15 6 -20 C14 -13 17 -5 16 4 C11 8 6 10 0 8Z"
+              fill="${wingTint}" stroke="${wingEdge}" stroke-width="2" stroke-linejoin="round"/>
+      </g>
+    </g>
+
+    <ellipse cx="54" cy="58" rx="18" ry="24"
+             fill="url(#eggShell${v})" stroke="rgba(120,83,51,.58)" stroke-width="2"/>
+    ${spots}
+
+    <ellipse cx="48" cy="48" rx="4.1" ry="6.2" fill="#2a2430"/>
+    <ellipse cx="60" cy="48" rx="4.1" ry="6.2" fill="#2a2430"/>
+    <circle cx="49.2" cy="46.2" r="1.45" fill="#fff"/>
+    <circle cx="61.2" cy="46.2" r="1.45" fill="#fff"/>
+    <circle cx="47.1" cy="56.2" r="2.0" fill="#f49aaa" opacity=".75"/>
+    <circle cx="60.9" cy="56.2" r="2.0" fill="#f49aaa" opacity=".75"/>
+    <path d="M50 57 Q54 61 58 57" fill="none" stroke="#b54b55" stroke-width="1.7" stroke-linecap="round"/>
+
+    <g transform="translate(31 18)">
+      <path d="M2 18 L7 3 L17 11 L24 0 L31 11 L41 3 L46 18 Z"
+            fill="${cc.main}" stroke="${cc.dark}" stroke-width="2" stroke-linejoin="round"/>
+      <rect x="3" y="16" width="42" height="7" rx="2.5" fill="${cc.main}" stroke="${cc.dark}" stroke-width="2"/>
+      <circle cx="7" cy="3" r="2.3" fill="${cc.gem}" stroke="${cc.dark}" stroke-width="1"/>
+      <circle cx="24" cy="0" r="2.5" fill="${cc.gem}" stroke="${cc.dark}" stroke-width="1"/>
+      <circle cx="41" cy="3" r="2.3" fill="${cc.gem}" stroke="${cc.dark}" stroke-width="1"/>
+    </g>
+  </svg>`;
+}
+
+function showWingedEggBadge(variantValue) {
+  const badge = document.getElementById("wingedEggBadge");
+  if (!badge) return;
+  badge.innerHTML = buildWingedEggBadgeSVG(variantValue);
+  badge.classList.remove("show");
+  void badge.offsetWidth;
+  badge.classList.add("show");
+}
+
+function hideWingedEggBadge() {
+  const badge = document.getElementById("wingedEggBadge");
+  if (!badge) return;
+  badge.classList.remove("show");
+  badge.innerHTML = "";
+}
+
 
 // ---------- 快門捕捉挑戰引擎 ----------
 let captureAnimId = null;
@@ -2157,8 +2697,13 @@ function attemptCapture() {
     if (!currentAnswered[bird.id]) currentAnswered[bird.id] = {};
     const alreadyCaptured = currentAnswered[bird.id + "_captured"] === true;
     currentAnswered[bird.id + "_captured"] = true;
+    if (!currentAnswered[bird.id + "_eggBadge"]) {
+      currentAnswered[bird.id + "_eggBadge"] = pickWingedEggVariant();
+    }
     if (GAME_MODE === "challenge" && !alreadyCaptured) {
-      totalScore += weightForRequiredCorrect(bird.requiredCorrect);
+      const birdScore = scoreForBirdCorrectCount(getBirdCorrectCount(bird.id));
+      currentAnswered[bird.id + "_score"] = birdScore;
+      totalScore += birdScore;
       updateScoreBar();
     }
     statusEl.textContent = "拍攝成功!";
@@ -2233,18 +2778,34 @@ function renderQuiz() {
   const captured = currentAnswered[bird.id + "_captured"] === true;
   const unlocked = correctSoFar >= bird.requiredCorrect;
 
+  if (captured) {
+    if (!currentAnswered[bird.id + "_eggBadge"]) {
+      currentAnswered[bird.id + "_eggBadge"] = pickWingedEggVariant();
+      if (GAME_MODE === "challenge") saveProgress();
+    }
+    showWingedEggBadge(currentAnswered[bird.id + "_eggBadge"]);
+  } else {
+    hideWingedEggBadge();
+  }
+
   const veil = document.getElementById("veil");
   const caption = document.getElementById("polaroidCaption");
   const photoEl = document.getElementById("revealPhoto");
   if (captured) {
     veil.style.opacity = "0";
-    caption.textContent = bird.name + " ・ 已收藏" + (bird.photographer ? " ・ 攝影:" + bird.photographer : "");
+    caption.textContent = bird.name + " ・ 已收藏";
     caption.classList.add("show");
+    const revealCredit = document.getElementById("revealPhotoCredit");
     if (bird.photoUrl) {
       photoEl.src = bird.photoUrl;
       photoEl.classList.add("show");
+      if (revealCredit) {
+        revealCredit.textContent = bird.photographer || "";
+        revealCredit.style.display = bird.photographer ? "block" : "none";
+      }
     } else {
       photoEl.classList.remove("show");
+      if (revealCredit) revealCredit.style.display = "none";
     }
   } else {
     const progress = Math.min(correctSoFar / bird.requiredCorrect, 1) * 0.85;
@@ -2252,6 +2813,8 @@ function renderQuiz() {
     veil.style.backdropFilter = "blur(" + (14 * (1 - progress)) + "px)";
     caption.classList.remove("show");
     photoEl.classList.remove("show");
+    const revealCredit = document.getElementById("revealPhotoCredit");
+    if (revealCredit) revealCredit.style.display = "none";
   }
 
   const qArea = document.getElementById("qArea");
@@ -2508,6 +3071,8 @@ function resetAdminForm() {
   document.getElementById("f_level").value = "1";
   document.getElementById("f_season").value = "春";
   document.getElementById("f_photo").value = "";
+  settingsBirdLocation = null;
+  syncSettingsLocationFields(null);
   document.querySelectorAll(".chk-btn.selected").forEach(el => el.classList.remove("selected"));
   document.querySelectorAll(".custom-input").forEach(el => el.value = "");
 }
@@ -2515,6 +3080,8 @@ function resetAdminForm() {
 document.getElementById("adminAddModeBtn").onclick = () => {
   resetAdminForm();
   setAdminDataMode("add");
+      settingsBirdLocation = null;
+      syncSettingsLocationFields(null);
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
@@ -2543,6 +3110,9 @@ function loadBirdForEdit(birdId) {
   document.getElementById("f_photographer").value = bird.photographer || "";
   document.getElementById("f_story").value = bird.story || "";
   document.getElementById("f_photo").value = "";
+
+  settingsBirdLocation = bird.location ? JSON.parse(JSON.stringify(bird.location)) : null;
+  syncSettingsLocationFields(settingsBirdLocation);
 
   document.querySelectorAll(".chk-btn.selected").forEach(el => el.classList.remove("selected"));
   document.querySelectorAll(".custom-input").forEach(el => el.value = "");
@@ -2647,6 +3217,9 @@ document.getElementById("saveBirdBtn").onclick = async () => {
       bird.story = story;
       if (photoUrl) bird.photoUrl = photoUrl;
       if (photographer) bird.photographer = photographer; else delete bird.photographer;
+      if (settingsBirdLocation) bird.location = JSON.parse(JSON.stringify(settingsBirdLocation));
+      else delete bird.location;
+      bird.uploadedAt = Date.now();
       await saveBirdToFirestore(bird);
     }
   } else {
@@ -2661,6 +3234,8 @@ document.getElementById("saveBirdBtn").onclick = async () => {
     };
     if (photoUrl) newBird.photoUrl = photoUrl;
     if (photographer) newBird.photographer = photographer;
+    if (settingsBirdLocation) newBird.location = JSON.parse(JSON.stringify(settingsBirdLocation));
+    newBird.uploadedAt = Date.now();
     birds.push(newBird);
     await saveBirdToFirestore(newBird);
   }
@@ -2887,6 +3462,7 @@ function renderExport() {
 // ---------- 語音導引（僅新增提示，不改原操作流程） ----------
 function speakGuide(text) {
   try {
+    if (!masterSoundEnabled) return;
     if (!("speechSynthesis" in window) || !text) return;
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = "zh-TW";
@@ -2922,6 +3498,20 @@ function activateMode(mode) {
     playerRow.style.display = "none";
   }
 
+  const searchWrap = document.getElementById("birdSearchWrap");
+  const searchInput = document.getElementById("birdSearchInput");
+  const searchStatus = document.getElementById("birdSearchStatus");
+  if (GAME_MODE === "challenge") {
+    searchWrap.style.display = "flex";
+  } else {
+    searchWrap.style.display = "none";
+    if (searchInput) searchInput.value = "";
+    if (searchStatus) {
+      searchStatus.style.display = "none";
+      searchStatus.textContent = "";
+    }
+  }
+
   updateScoreBar();
   renderBirdGrid();
   const birdGrid = document.getElementById("birdGrid");
@@ -2942,6 +3532,8 @@ function buildBirdsDoneMap() {
 
 function saveProgress() {
   if (!FIREBASE_ENABLED || !db || !currentPlayerId) return;
+  recalculateTotalScoreFromProgress();
+  updateScoreBar();
   const cleanProgress = JSON.parse(JSON.stringify(currentAnswered));
   db.collection("players").doc(currentPlayerId).set({
     id: currentPlayerId,
@@ -2977,6 +3569,73 @@ function showChallengeMenu() {
   });
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
   document.getElementById("view-challenge-menu").classList.add("active");
+  updateChallengeAccountBar();
+}
+
+
+const CHALLENGE_SESSION_KEY = "birdGuideChallengeSessionV3";
+const CHALLENGE_REMEMBER_KEY = "birdGuideRememberChallengeLogin";
+
+function isChallengeLoginRemembered() {
+  return localStorage.getItem(CHALLENGE_REMEMBER_KEY) !== "0";
+}
+function saveChallengeSession(id, pin) {
+  try {
+    if (!isChallengeLoginRemembered()) {
+      localStorage.removeItem(CHALLENGE_SESSION_KEY);
+      return;
+    }
+    if (id && pin) localStorage.setItem(CHALLENGE_SESSION_KEY, JSON.stringify({ id, pin, savedAt:Date.now() }));
+  } catch (e) {}
+}
+function clearChallengeSession() {
+  try { localStorage.removeItem(CHALLENGE_SESSION_KEY); } catch (e) {}
+}
+function loadChallengeSession() {
+  try {
+    if (!navigator.onLine || !isChallengeLoginRemembered()) return null;
+    const raw = localStorage.getItem(CHALLENGE_SESSION_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    return (data && data.id && data.pin) ? data : null;
+  } catch (e) { return null; }
+}
+
+function updateChallengeAccountBar() {
+  const bar = document.getElementById("challengeAccountBar");
+  const text = document.getElementById("challengeAccountText");
+  if (!bar || !text) return;
+  const session = loadChallengeSession();
+  if (!session) {
+    bar.style.display = "none";
+    text.textContent = "";
+    return;
+  }
+  text.textContent = `${session.id}  ·  密碼 ••••••`;
+  bar.style.display = "flex";
+}
+
+document.getElementById("switchChallengeAccountBtn")?.addEventListener("click", () => {
+  clearChallengeSession();
+  currentPlayerId = "";
+  const idInput = document.getElementById("playerIdInput");
+  const pinInput = document.getElementById("playerPinInput");
+  if (idInput) idInput.value = "";
+  if (pinInput) pinInput.value = "";
+  const rememberEl = document.getElementById("rememberChallengeLogin");
+  if (rememberEl) rememberEl.checked = true;
+  document.getElementById("loginError").style.display = "none";
+  document.getElementById("loginPinError").style.display = "none";
+  document.getElementById("loginModalOverlay").style.display = "flex";
+  setTimeout(() => idInput?.focus(), 0);
+});
+const rememberChallengeLoginEl = document.getElementById("rememberChallengeLogin");
+if (rememberChallengeLoginEl) {
+  rememberChallengeLoginEl.checked = isChallengeLoginRemembered();
+  rememberChallengeLoginEl.addEventListener("change", () => {
+    localStorage.setItem(CHALLENGE_REMEMBER_KEY, rememberChallengeLoginEl.checked ? "1" : "0");
+    if (!rememberChallengeLoginEl.checked) clearChallengeSession();
+  });
 }
 
 document.querySelectorAll(".mode-btn").forEach(btn => {
@@ -2989,13 +3648,27 @@ document.querySelectorAll(".mode-btn").forEach(btn => {
     speakGuide(mode === "challenge" ? "請輸入個人專屬帳號密碼" : "請選擇一隻鳥");
     document.getElementById("birdGrid").classList.remove("tiffany-pulse");
     if (mode === "challenge") {
+      const savedSession = loadChallengeSession();
       if (FIREBASE_ENABLED) {
-        document.getElementById("playerIdInput").value = currentPlayerId || "";
-        document.getElementById("playerPinInput").value = "";
         document.getElementById("loginError").style.display = "none";
         document.getElementById("loginPinError").style.display = "none";
-        document.getElementById("loginModalOverlay").style.display = "flex";
-        document.getElementById("playerIdInput").focus();
+
+        if (savedSession) {
+          document.getElementById("playerIdInput").value = savedSession.id;
+          document.getElementById("playerPinInput").value = savedSession.pin;
+          const rememberEl = document.getElementById("rememberChallengeLogin");
+          if (rememberEl) rememberEl.checked = true;
+          // 已登入過且目前在線：直接驗證並進入，不再重複顯示登入視窗
+          document.getElementById("loginModalOverlay").style.display = "none";
+          setTimeout(() => document.getElementById("loginConfirmBtn")?.click(), 0);
+        } else {
+          document.getElementById("playerIdInput").value = currentPlayerId || "";
+          document.getElementById("playerPinInput").value = "";
+          const rememberEl = document.getElementById("rememberChallengeLogin");
+          if (rememberEl) rememberEl.checked = isChallengeLoginRemembered();
+          document.getElementById("loginModalOverlay").style.display = "flex";
+          document.getElementById("playerIdInput").focus();
+        }
       } else {
         showChallengeMenu();
       }
@@ -3043,7 +3716,7 @@ document.getElementById("loginConfirmBtn").onclick = async () => {
       } else {
         currentPlayerId = id;
         currentAnswered = {};
-        totalScore = data.score || 0;
+        totalScore = 0;
         if (data.progress && typeof data.progress === "object") {
           currentAnswered = data.progress;
         } else if (data.birdsDone) {
@@ -3055,6 +3728,7 @@ document.getElementById("loginConfirmBtn").onclick = async () => {
             }
           });
         }
+        recalculateTotalScoreFromProgress();
         if (!data.pin) {
           await docRef.set({ pin: pin }, { merge: true });
         }
@@ -3082,7 +3756,14 @@ document.getElementById("loginConfirmBtn").onclick = async () => {
   confirmBtn.textContent = "開始挑戰";
 
   if (loginOk) {
+    const rememberEl = document.getElementById("rememberChallengeLogin");
+    const shouldRemember = rememberEl ? rememberEl.checked : true;
+    localStorage.setItem(CHALLENGE_REMEMBER_KEY, shouldRemember ? "1" : "0");
+    if (shouldRemember) saveChallengeSession(id, pin);
+    else clearChallengeSession();
+
     document.getElementById("loginModalOverlay").style.display = "none";
+    updateChallengeAccountBar();
     speakGuide("請選取模式");
     showChallengeMenu();
   }
@@ -3307,8 +3988,9 @@ function renderGalleryGrid() {
   birds.forEach((b, i) => {
     const tile = document.createElement("div");
     tile.className = "bird-tile";
+    const galleryCredit = b.photographer ? `<div class="photo-credit">${b.photographer}</div>` : "";
     const thumbInner = b.photoUrl
-      ? `<img src="${b.photoUrl}" alt="${b.name}" style="width:100%;height:100%;object-fit:cover;">`
+      ? `<div class="thumb-photo-wrap"><img src="${b.photoUrl}" alt="${b.name}" style="width:100%;height:100%;object-fit:cover;">${galleryCredit}</div>`
       : `<div class="mystery-placeholder">${buildMysteryBirdImg(mysteryImgForLevel(b.level))}</div>`;
     tile.innerHTML = `
       <div class="index">No. ${String(i + 1).padStart(3, "0")}</div>
@@ -3332,7 +4014,8 @@ function showGalleryDetail(birdId) {
   const photoBox = document.getElementById("galleryPhotoBox");
   photoBox.innerHTML = "";
   if (bird.photoUrl) {
-    photoBox.innerHTML = `<img src="${bird.photoUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+    const credit = bird.photographer ? `<div class="photo-credit">${bird.photographer}</div>` : "";
+    photoBox.innerHTML = `<div class="thumb-photo-wrap"><img src="${bird.photoUrl}" style="width:100%;height:100%;object-fit:cover;">${credit}</div>`;
   } else {
     photoBox.innerHTML = `<div class="mystery-placeholder">${buildMysteryBirdImg(mysteryImgForLevel(bird.level))}</div>`;
   }
@@ -3346,6 +4029,32 @@ function showGalleryDetail(birdId) {
     row.innerHTML = `<span class="gc-label">${cond.label}</span><span class="gc-value">${values || "-"}</span>`;
     listEl.appendChild(row);
   });
+
+  const locationRow = document.createElement("div");
+  locationRow.className = "gallery-condition-row";
+  const locationText = bird.location
+    ? ((bird.location.name && String(bird.location.name).trim())
+        ? String(bird.location.name).trim()
+        : `${Number(bird.location.latitude).toFixed(5)}, ${Number(bird.location.longitude).toFixed(5)}`)
+    : "未記錄";
+  locationRow.innerHTML = `<span class="gc-label">定位點</span><span class="gc-value" id="galleryLocationValue">${locationText}</span>`;
+  listEl.appendChild(locationRow);
+
+  const uploadRow = document.createElement("div");
+  uploadRow.className = "gallery-condition-row";
+  const uploadTime = bird.uploadedAt || bird.location?.timestamp || null;
+  uploadRow.innerHTML = `<span class="gc-label">上傳時間</span><span class="gc-value">${uploadTime ? formatGeoTime(uploadTime) : "未記錄"}</span>`;
+  listEl.appendChild(uploadRow);
+
+  // 舊資料若只有座標沒有地名，查看時嘗試補抓地名；失敗則保留座標。
+  if (bird.location && !bird.location.name && bird.location.latitude != null && bird.location.longitude != null) {
+    reverseGeocodeLocation(bird.location.latitude, bird.location.longitude).then(placeName => {
+      if (!placeName) return;
+      bird.location.name = placeName;
+      const el = document.getElementById("galleryLocationValue");
+      if (el && document.getElementById("galleryBirdName").textContent === bird.name) el.textContent = placeName;
+    });
+  }
 }
 
 document.getElementById("galleryBackBtn").onclick = () => showChallengeMenu();
@@ -3385,19 +4094,23 @@ document.getElementById("leaderboardCloseBtn").onclick = () => {
 
 // ---------- 設置密碼驗證 ----------
 const SETTINGS_PASSWORD = "LanYH&Birds";
+const SETTINGS_REMEMBER_KEY = "birdGuideRememberSettingsPassword";
 let settingsUnlocked = false;
 
-// 設置入口採強制驗證：不使用永久登入，避免沒有登出按鈕時直接進入設置。
-try {
-  Object.keys(localStorage).forEach(key => {
-    if (key.indexOf("birdguide_settings_unlocked") === 0) {
-      localStorage.removeItem(key);
-    }
+function isSettingsPasswordRemembered() {
+  return localStorage.getItem(SETTINGS_REMEMBER_KEY) === "1";
+}
+const rememberSettingsPasswordEl = document.getElementById("rememberSettingsPassword");
+if (rememberSettingsPasswordEl) {
+  rememberSettingsPasswordEl.checked = isSettingsPasswordRemembered();
+  rememberSettingsPasswordEl.addEventListener("change", () => {
+    localStorage.setItem(SETTINGS_REMEMBER_KEY, rememberSettingsPasswordEl.checked ? "1" : "0");
   });
-} catch (e) { /* localStorage 不可用時忽略 */ }
+}
 
 function speakGreeting(text) {
   try {
+    if (!masterSoundEnabled) return;
     if (!("speechSynthesis" in window)) return;
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = "zh-TW";
@@ -3432,7 +4145,7 @@ function exitSettings() {
   document.getElementById("modeSelect").style.display = "flex";
   document.getElementById("settingsBtn").style.display = "block";
   document.getElementById("groupBtn").style.display = "block";
-  // 離開設置後立即重新上鎖；下次從主頁進入必須再次輸入密碼。
+  // 離開設置後重新上鎖；若選擇記住密碼，下次只自動帶入，不跳過登入介面。
   settingsUnlocked = false;
   if (window.__birdGuideGameLayerEntered !== true) {
     document.getElementById("bird-list-panel").style.display = "none";
@@ -3469,10 +4182,14 @@ document.getElementById("groupsBackBtn").onclick = () => exitGroups();
 
 document.getElementById("settingsBtn").onclick = () => {
   settingsUnlocked = false;
-  document.getElementById("settingsPasswordInput").value = "";
+  const rememberEl = document.getElementById("rememberSettingsPassword");
+  const passwordInput = document.getElementById("settingsPasswordInput");
+  const remembered = isSettingsPasswordRemembered();
+  if (rememberEl) rememberEl.checked = remembered;
+  if (passwordInput) passwordInput.value = remembered ? SETTINGS_PASSWORD : "";
   document.getElementById("passwordError").style.display = "none";
   document.getElementById("passwordModalOverlay").style.display = "flex";
-  document.getElementById("settingsPasswordInput").focus();
+  setTimeout(() => passwordInput?.focus(), 0);
 };
 
 document.getElementById("passwordCancelBtn").onclick = () => {
@@ -3483,6 +4200,9 @@ function submitSettingsPassword() {
   const val = document.getElementById("settingsPasswordInput").value;
   if (val === SETTINGS_PASSWORD) {
     settingsUnlocked = true;
+    const rememberEl = document.getElementById("rememberSettingsPassword");
+    const shouldRemember = rememberEl ? rememberEl.checked : false;
+    localStorage.setItem(SETTINGS_REMEMBER_KEY, shouldRemember ? "1" : "0");
     document.getElementById("passwordModalOverlay").style.display = "none";
     enterSettings();
   } else {
