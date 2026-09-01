@@ -1273,6 +1273,37 @@
 }
 @media(max-width:640px){.settings-location-grid{grid-template-columns:1fr}}
 
+
+  /* V3.5：成功抓拍徽章 */
+  .capture-result-line{
+    position:relative;
+    min-height:34px;
+    margin-bottom:8px;
+  }
+  .capture-result-line .progress-line{ margin-bottom:0; }
+  .winged-egg-badge{
+    display:none;
+    position:absolute;
+    right:6px;
+    top:-8px;
+    width:72px;
+    height:72px;
+    z-index:8;
+    filter:drop-shadow(0 5px 9px rgba(47,31,63,.22));
+    animation:eggBadgePop .44s cubic-bezier(.2,.9,.28,1.25);
+    pointer-events:none;
+  }
+  .winged-egg-badge.show{ display:block; }
+  .winged-egg-badge svg{ width:100%;height:100%;display:block;overflow:visible; }
+  @keyframes eggBadgePop{
+    0%{transform:scale(.25) rotate(-12deg);opacity:0}
+    70%{transform:scale(1.12) rotate(3deg);opacity:1}
+    100%{transform:scale(1) rotate(0);opacity:1}
+  }
+  @media(max-width:420px){
+    .winged-egg-badge{width:64px;height:64px;right:2px;top:-6px}
+  }
+
 </style>
 </head>
 <body>
@@ -1291,7 +1322,7 @@
     <div class="home-hero-content">
       <header class="app-header">
         <h1 id="heroTitle">小小鳥類解說員</h1>
-        <p id="heroSubtitle">Field Guide Vresion3. 3</p>
+        <p id="heroSubtitle">Field Guide Vresion3. 5</p>
       </header>
 
       <div class="mode-select" id="modeSelect">
@@ -1397,7 +1428,10 @@
           </div>
           <div class="polaroid-caption" id="polaroidCaption"></div>
         </div>
-        <div class="progress-line">答對條件 <b id="correctCount">0</b> / <span id="requiredCount">0</span></div>
+        <div class="capture-result-line">
+          <div class="progress-line">答對條件 <b id="correctCount">0</b> / <span id="requiredCount">0</span></div>
+          <div class="winged-egg-badge" id="wingedEggBadge" aria-label="過關徽章"></div>
+        </div>
 
         <div id="qArea"></div>
 
@@ -2395,6 +2429,115 @@ function hideHomeWelcome() {
   stage.setAttribute("aria-hidden", "true");
 }
 
+
+// ---------- V3.5 隱藏式 365 種飛行蛋徽章 ----------
+// 不顯示清單／圖鑑／預覽；只有成功抓拍後才顯示當次取得的一枚。
+function normalizeEggVariant(value) {
+  const n = Number(value);
+  if (Number.isFinite(n) && n >= 1 && n <= 365) return Math.floor(n);
+  return 1;
+}
+
+function pickWingedEggVariant() {
+  return 1 + Math.floor(Math.random() * 365);
+}
+
+function buildWingedEggBadgeSVG(variantValue) {
+  const v = normalizeEggVariant(variantValue);
+  const i = v - 1;
+
+  // 365 個索引各自使用不同色相；再疊加翅膀長度、角度、斑點、蛋殼光澤等變化。
+  const hue = (i * 360 / 365);
+  const hue2 = (hue + 38 + (i % 5) * 7) % 360;
+  const shell = `hsl(${hue.toFixed(2)} 58% ${78 - (i % 4) * 4}%)`;
+  const shell2 = `hsl(${hue2.toFixed(2)} 68% ${54 + (i % 3) * 5}%)`;
+  const wingTint = `hsl(${((hue + 196) % 360).toFixed(2)} 58% 91%)`;
+  const wingEdge = `hsl(${((hue + 205) % 360).toFixed(2)} 48% 62%)`;
+  const shield = `hsl(${((hue + 278) % 360).toFixed(2)} 52% 79%)`;
+  const shieldEdge = `hsl(${((hue + 294) % 360).toFixed(2)} 48% 54%)`;
+
+  const wingStretch = 0.82 + (i % 9) * 0.035;
+  const wingLift = -8 + (Math.floor(i / 9) % 9) * 2;
+  const spotMode = i % 5;
+  const spotCount = 3 + (i % 6);
+  let spots = "";
+  for (let s = 0; s < spotCount; s++) {
+    const x = 45 + ((s * 11 + i * 3) % 20);
+    const y = 25 + ((s * 17 + i * 5) % 35);
+    const r = 1.2 + ((s + i) % 3) * .55;
+    const fill = spotMode % 2 === 0 ? shell2 : `hsla(${((hue+110)%360).toFixed(1)} 45% 38% /.62)`;
+    if (spotMode === 3 && s % 2 === 0) {
+      spots += `<path d="M${x-2} ${y} q2 -3 4 0 q-2 3 -4 0" fill="none" stroke="${fill}" stroke-width="1.5"/>`;
+    } else {
+      spots += `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" opacity=".72"/>`;
+    }
+  }
+
+  const stripeOpacity = spotMode === 4 ? .34 : 0;
+  const shineX = 48 + (i % 5);
+
+  return `
+  <svg viewBox="0 0 108 108" role="img" aria-label="飛行蛋過關徽章">
+    <defs>
+      <linearGradient id="eggShell${v}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#fffdf8"/>
+        <stop offset=".38" stop-color="${shell}"/>
+        <stop offset="1" stop-color="${shell2}"/>
+      </linearGradient>
+      <linearGradient id="shield${v}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${shield}"/>
+        <stop offset="1" stop-color="${shieldEdge}"/>
+      </linearGradient>
+    </defs>
+
+    <path d="M20 14 H88 V63 Q88 80 54 96 Q20 80 20 63 Z"
+          fill="url(#shield${v})" stroke="rgba(150,112,55,.72)" stroke-width="2.5"/>
+    <path d="M26 19 H82" stroke="rgba(255,255,255,.74)" stroke-width="2" stroke-linecap="round"/>
+
+    <g transform="translate(54 53) rotate(${wingLift*.25}) scale(${wingStretch} 1)">
+      <g transform="translate(-27 -4) rotate(${wingLift})">
+        <path d="M0 10 C-12 4 -22 -5 -25 -17 C-13 -15 -4 -9 5 -1 C1 -12 1 -20 4 -28 C14 -19 18 -8 18 4 C12 9 6 12 0 10Z"
+              fill="${wingTint}" stroke="${wingEdge}" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M-17 -11 Q-5 -6 7 3 M-9 -18 Q1 -11 11 -1 M1 -22 Q8 -14 14 -5"
+              fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2" stroke-linecap="round"/>
+      </g>
+      <g transform="translate(27 -4) scale(-1 1) rotate(${wingLift})">
+        <path d="M0 10 C-12 4 -22 -5 -25 -17 C-13 -15 -4 -9 5 -1 C1 -12 1 -20 4 -28 C14 -19 18 -8 18 4 C12 9 6 12 0 10Z"
+              fill="${wingTint}" stroke="${wingEdge}" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M-17 -11 Q-5 -6 7 3 M-9 -18 Q1 -11 11 -1 M1 -22 Q8 -14 14 -5"
+              fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2" stroke-linecap="round"/>
+      </g>
+    </g>
+
+    <ellipse cx="54" cy="53" rx="18" ry="25"
+             fill="url(#eggShell${v})" stroke="rgba(120,83,51,.6)" stroke-width="2"/>
+    <path d="M40 44 Q54 38 68 44 M39 53 Q54 47 69 53 M41 62 Q54 57 67 62"
+          fill="none" stroke="${shell2}" stroke-width="2" opacity="${stripeOpacity}"/>
+    ${spots}
+    <ellipse cx="${shineX}" cy="39" rx="5.2" ry="9.5" fill="rgba(255,255,255,.48)" transform="rotate(18 ${shineX} 39)"/>
+    <path d="M34 22 l2.2 5 5 .8 -4 3.2 1.2 5 -4.4-2.7 -4.4 2.7 1.2-5 -4-3.2 5-.8Z"
+          fill="rgba(255,246,176,.88)"/>
+    <circle cx="78" cy="31" r="2.6" fill="rgba(255,255,255,.82)"/>
+  </svg>`;
+}
+
+function showWingedEggBadge(variantValue) {
+  const badge = document.getElementById("wingedEggBadge");
+  if (!badge) return;
+  badge.innerHTML = buildWingedEggBadgeSVG(variantValue);
+  badge.classList.remove("show");
+  void badge.offsetWidth;
+  badge.classList.add("show");
+}
+
+function hideWingedEggBadge() {
+  const badge = document.getElementById("wingedEggBadge");
+  if (!badge) return;
+  badge.classList.remove("show");
+  badge.innerHTML = "";
+}
+
+
 // ---------- 快門捕捉挑戰引擎 ----------
 let captureAnimId = null;
 let birdPos = { x: 0, y: 0 };
@@ -2528,6 +2671,9 @@ function attemptCapture() {
     if (!currentAnswered[bird.id]) currentAnswered[bird.id] = {};
     const alreadyCaptured = currentAnswered[bird.id + "_captured"] === true;
     currentAnswered[bird.id + "_captured"] = true;
+    if (!currentAnswered[bird.id + "_eggBadge"]) {
+      currentAnswered[bird.id + "_eggBadge"] = pickWingedEggVariant();
+    }
     if (GAME_MODE === "challenge" && !alreadyCaptured) {
       totalScore += weightForRequiredCorrect(bird.requiredCorrect);
       updateScoreBar();
@@ -2603,6 +2749,16 @@ function renderQuiz() {
 
   const captured = currentAnswered[bird.id + "_captured"] === true;
   const unlocked = correctSoFar >= bird.requiredCorrect;
+
+  if (captured) {
+    if (!currentAnswered[bird.id + "_eggBadge"]) {
+      currentAnswered[bird.id + "_eggBadge"] = pickWingedEggVariant();
+      if (GAME_MODE === "challenge") saveProgress();
+    }
+    showWingedEggBadge(currentAnswered[bird.id + "_eggBadge"]);
+  } else {
+    hideWingedEggBadge();
+  }
 
   const veil = document.getElementById("veil");
   const caption = document.getElementById("polaroidCaption");
